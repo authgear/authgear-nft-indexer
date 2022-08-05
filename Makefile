@@ -1,3 +1,7 @@
+.PHONY: start-worker
+start-worker:
+	go run ./cmd/indexer start
+
 .PHONY: setup
 setup: vendor
 	cp authgear-nft-indexer.yaml.example authgear-nft-indexer.yaml.yaml

@@ -4,7 +4,9 @@ go 1.18
 
 require (
 	github.com/authgear/authgear-server v0.0.0-20220805015102-324cbca24302
+	github.com/go-co-op/gocron v1.16.2
 	github.com/google/wire v0.5.0
+	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/rubenv/sql-migrate v1.1.2
 	github.com/spf13/cobra v1.5.0
@@ -33,7 +35,6 @@ require (
 	github.com/iawaknahc/originmatcher v0.0.0-20211201081401-fcef394681f5 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/lib/pq v1.10.6 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -45,6 +46,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pquerna/otp v1.3.0 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/smartystreets/assertions v1.2.0 // indirect
 	github.com/smartystreets/goconvey v1.7.2
 	github.com/spf13/afero v1.8.2 // indirect
@@ -57,6 +59,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect

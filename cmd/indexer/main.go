@@ -5,6 +5,7 @@ import (
 
 	"github.com/authgear/authgear-nft-indexer/cmd/indexer/cmd"
 	_ "github.com/authgear/authgear-nft-indexer/cmd/indexer/cmd/cmddatabase"
+	_ "github.com/authgear/authgear-nft-indexer/cmd/indexer/cmd/cmdstart"
 )
 
 func main() {
