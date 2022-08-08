@@ -1,0 +1,28 @@
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - gocyclo
+    - golint
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - errcheck
+    - varcheck
+  # https://github.com/golangci/golangci-lint/pull/2438
+  # Disable linter that does not work with go1.18
+  #- staticcheck
+  #- unused
+  #- gosimple
+
+linters-settings:
+  gofmt:
+    simplify: false
+  gosec:
+    excludes:
+      - G404 # G404: Use of weak random number generator (math/rand instead of crypto/rand)
+
+run:
+  go: 1.18
+  timeout: 5m
