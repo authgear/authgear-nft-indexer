@@ -6,6 +6,11 @@ setup: vendor
 vendor:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.46.2
 	go mod download
+	go install github.com/google/wire/cmd/wire@latest
+
+.PHONY: generate
+generate:
+	go generate ./pkg/... ./cmd/...
 
 .PHONY: test
 test:
