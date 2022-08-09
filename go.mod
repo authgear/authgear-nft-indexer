@@ -16,10 +16,12 @@ require (
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/iawaknahc/jsonschema v0.0.0-20211026064614-d05c07b7760d // indirect
 	github.com/iawaknahc/originmatcher v0.0.0-20211201081401-fcef394681f5 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/lib/pq v1.10.6 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -28,6 +30,8 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pquerna/otp v1.3.0 // indirect
+	github.com/smartystreets/assertions v1.2.0 // indirect
+	github.com/smartystreets/goconvey v1.7.2
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
