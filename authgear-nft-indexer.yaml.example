@@ -1,0 +1,16 @@
+redis:
+  server: localhost:6379
+  database: "0"
+  pool_size: 30
+database:
+  url: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+  pool_size: 10
+  verbose: false
+worker:
+  collection_queue_name: nft_collection
+  transfer_queue_name: nft_transfer
+alchemy:
+  - blockchain: ethereum
+    network:mainnet
+    endpoint: https://eth-mainnet.g.alchemy.com/v2/
+    api_key:
