@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
+	"github.com/authgear/authgear-nft-indexer/pkg/handler"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,16 +21,15 @@ func (s *Server) Start() {
 		c.String(http.StatusOK, "pong")
 	})
 
-	router.POST("/register", func(_ *gin.Context) {
-		// TODO: Handle collection registartion
-	})
-	router.POST("/deregister", func(_ *gin.Context) {
-		// TODO: Handle collection deregistration
-	})
+	registerHandler := handler.NewRegisterCollectionAPIHandler(s.session, s.config)
+	router.POST("/register", registerHandler.Handler())
 
-	router.GET("/collections", func(_ *gin.Context) {
-		// TODO: Handle listing collections
-	})
+	deregisterHandler := handler.NewDeregisterCollectionAPIHandler(s.session, s.config)
+	router.POST("/deregister", deregisterHandler.Handler())
+
+	listHandler := handler.NewListCollectionAPIHandler(s.session, s.config)
+	router.GET("/collections", listHandler.Handler())
+
 	router.GET("/collections/:address/owners", func(_ *gin.Context) {
 		// TODO: Handle listing owners under a collection
 	})
