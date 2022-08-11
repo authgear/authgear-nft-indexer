@@ -19,11 +19,19 @@ type AlchemyAPI struct {
 	Config config.Config
 }
 
-func (a *AlchemyAPI) getNetworkConfig(blockchainNetwork model.BlockchainNetwork) *config.AlchemyConfig {
+type AlchemyEndpoint struct {
+	TransferEndpoint string
+	NFTEndpoint      string
+}
+
+func (a *AlchemyAPI) getRequestEndpoints(blockchainNetwork model.BlockchainNetwork) *AlchemyEndpoint {
 	alchemyNetworks := a.Config.Alchemy
 	for _, alchemyNetwork := range alchemyNetworks {
 		if alchemyNetwork.Blockchain == blockchainNetwork.Blockchain && alchemyNetwork.Network == blockchainNetwork.Network {
-			return &alchemyNetwork
+			return &AlchemyEndpoint{
+				TransferEndpoint: fmt.Sprintf("%s/v2/%s", alchemyNetwork.Endpoint, alchemyNetwork.APIKey),
+				NFTEndpoint:      fmt.Sprintf("%s/nft/v2/%s", alchemyNetwork.Endpoint, alchemyNetwork.APIKey),
+			}
 		}
 	}
 
@@ -31,8 +39,8 @@ func (a *AlchemyAPI) getNetworkConfig(blockchainNetwork model.BlockchainNetwork)
 }
 
 func (a *AlchemyAPI) GetNFTTransfers(blockchainNetwork model.BlockchainNetwork, contractAddresses []string, fromBlock string, toBlock string, pageKey string, maxCount int64) (*apimodel.AssetTransferResponse, error) {
-	alchemyNetwork := a.getNetworkConfig(blockchainNetwork)
-	if alchemyNetwork == nil {
+	alchemyEndpoints := a.getRequestEndpoints(blockchainNetwork)
+	if alchemyEndpoints == nil {
 		return nil, fmt.Errorf("network %s %s not found", blockchainNetwork.Blockchain, blockchainNetwork.Network)
 	}
 
@@ -63,8 +71,8 @@ func (a *AlchemyAPI) GetNFTTransfers(blockchainNetwork model.BlockchainNetwork, 
 		return nil, fmt.Errorf("failed to marshal json: %s", err)
 	}
 
-	log.Printf("Requesting NFT Transfers for contractAddresses: %s from network %s, fromBlock %s, toBlock %s from endpoint %s", strings.Join(contractAddresses, ", "), alchemyNetwork.Network, fromBlock, toBlock, alchemyNetwork.Endpoint)
-	res, err := http.Post(alchemyNetwork.Endpoint+alchemyNetwork.APIKey, "application/json", bytes.NewBuffer(jsonBody))
+	log.Printf("Requesting NFT Transfers for contractAddresses: %s from network %s %s, fromBlock %s, toBlock %s", strings.Join(contractAddresses, ", "), blockchainNetwork.Blockchain, blockchainNetwork.Network, fromBlock, toBlock)
+	res, err := http.Post(alchemyEndpoints.TransferEndpoint, "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %s", err)
 	}
@@ -83,6 +91,37 @@ func (a *AlchemyAPI) GetNFTTransfers(blockchainNetwork model.BlockchainNetwork, 
 
 	if response.Error != nil {
 		return nil, fmt.Errorf("failed to get NFT transfers: %s", response.Error.Message)
+	}
+
+	return &response, nil
+}
+
+func (a *AlchemyAPI) GetContractMetadata(blockchainNetwork model.BlockchainNetwork, contractAddress string) (*apimodel.ContractMetadataResponse, error) {
+	alchemyEndpoints := a.getRequestEndpoints(blockchainNetwork)
+	if alchemyEndpoints == nil {
+		return nil, fmt.Errorf("network %s %s not found", blockchainNetwork.Blockchain, blockchainNetwork.Network)
+	}
+
+	if contractAddress == "" {
+		return nil, fmt.Errorf("contractAddress is empty")
+	}
+
+	log.Printf("Requesting contract metadata for contractAddress: %s from network %s %s", contractAddress, blockchainNetwork.Blockchain, blockchainNetwork.Network)
+	res, err := http.Get(fmt.Sprintf("%s/getContractMetadata?contractAddress=%s", alchemyEndpoints.NFTEndpoint, contractAddress))
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %s", err)
+	}
+	defer res.Body.Close()
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %s", err)
+	}
+
+	var response apimodel.ContractMetadataResponse
+	err = json.Unmarshal(resBody, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %s", err)
 	}
 
 	return &response, nil
