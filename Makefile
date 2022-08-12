@@ -9,7 +9,7 @@ start-worker:
 
 .PHONY: setup
 setup: vendor
-	cp authgear-nft-indexer.yaml.example authgear-nft-indexer.yaml.yaml
+	cp authgear-nft-indexer.yaml.example authgear-nft-indexer.yaml
 
 .PHONY: vendor
 vendor:
