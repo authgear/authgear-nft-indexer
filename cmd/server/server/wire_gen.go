@@ -8,6 +8,12 @@ package server
 
 import (
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
+	"github.com/authgear/authgear-nft-indexer/pkg/handler"
+	"github.com/authgear/authgear-nft-indexer/pkg/mutator"
+	"github.com/authgear/authgear-nft-indexer/pkg/query"
+	"github.com/authgear/authgear-nft-indexer/pkg/web3"
+	"github.com/gin-gonic/gin"
+	"github.com/uptrace/bun"
 )
 
 // Injectors from wire.go:
@@ -17,4 +23,48 @@ func NewServer(config2 config.Config) Server {
 		config: config2,
 	}
 	return server
+}
+
+func NewRegisterCollectionAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.RegisterCollectionAPIHandler {
+	alchemyAPI := &web3.AlchemyAPI{
+		Config: config2,
+	}
+	context := ProvideContext(ctx)
+	nftCollectionMutator := &mutator.NFTCollectionMutator{
+		Ctx:     context,
+		Session: session,
+	}
+	registerCollectionAPIHandler := handler.RegisterCollectionAPIHandler{
+		Ctx:                  ctx,
+		Config:               config2,
+		AlchemyAPI:           alchemyAPI,
+		NFTCollectionMutator: nftCollectionMutator,
+	}
+	return registerCollectionAPIHandler
+}
+
+func NewDeregisterCollectionAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.DeregisterCollectionAPIHandler {
+	context := ProvideContext(ctx)
+	nftCollectionMutator := &mutator.NFTCollectionMutator{
+		Ctx:     context,
+		Session: session,
+	}
+	deregisterCollectionAPIHandler := handler.DeregisterCollectionAPIHandler{
+		Ctx:                  ctx,
+		NFTCollectionMutator: nftCollectionMutator,
+	}
+	return deregisterCollectionAPIHandler
+}
+
+func NewListCollectionAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.ListCollectionAPIHandler {
+	context := ProvideContext(ctx)
+	nftCollectionQuery := &query.NFTCollectionQuery{
+		Ctx:     context,
+		Session: session,
+	}
+	listCollectionAPIHandler := handler.ListCollectionAPIHandler{
+		Ctx:                ctx,
+		NFTCollectionQuery: nftCollectionQuery,
+	}
+	return listCollectionAPIHandler
 }

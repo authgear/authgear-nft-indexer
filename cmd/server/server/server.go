@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
-	"github.com/authgear/authgear-nft-indexer/pkg/handler"
+	"github.com/authgear/authgear-nft-indexer/pkg/database"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,22 +15,28 @@ type Server struct {
 func (s *Server) Start() {
 	router := gin.Default()
 
-	// db := database.GetDatabase(s.config.Database)
+	db := database.GetDatabase(s.config.Database)
 
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 
-	registerHandler := handler.NewRegisterCollectionAPIHandler(s.session, s.config)
-	router.POST("/register", registerHandler.Handler())
+	router.POST("/register", func(ctx *gin.Context) {
+		registerHandler := NewRegisterCollectionAPIHandler(ctx, s.config, db)
+		registerHandler.Handle()
+	})
 
-	deregisterHandler := handler.NewDeregisterCollectionAPIHandler(s.session, s.config)
-	router.POST("/deregister", deregisterHandler.Handler())
+	router.POST("/deregister", func(ctx *gin.Context) {
+		deregisterHandler := NewDeregisterCollectionAPIHandler(ctx, s.config, db)
+		deregisterHandler.Handle()
+	})
 
-	listHandler := handler.NewListCollectionAPIHandler(s.session, s.config)
-	router.GET("/collections", listHandler.Handler())
+	router.GET("/collections", func(ctx *gin.Context) {
+		listHandler := NewListCollectionAPIHandler(ctx, s.config, db)
+		listHandler.Handle()
+	})
 
-	router.GET("/collections/:address/owners", func(_ *gin.Context) {
+	router.GET("/collections/:blockchain/:network/owners/:address", func(_ *gin.Context) {
 		// TODO: Handle listing owners under a collection
 	})
 	router.GET("/nfts/:owner", func(_ *gin.Context) {
