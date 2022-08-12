@@ -68,3 +68,16 @@ func NewListCollectionAPIHandler(ctx *gin.Context, config2 config.Config, sessio
 	}
 	return listCollectionAPIHandler
 }
+
+func NewListCollectionOwnerAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.ListCollectionOwnersAPIHandler {
+	context := ProvideContext(ctx)
+	nftOwnerQuery := query.NFTOwnerQuery{
+		Ctx:     context,
+		Session: session,
+	}
+	listCollectionOwnersAPIHandler := handler.ListCollectionOwnersAPIHandler{
+		Ctx:           ctx,
+		NFTOwnerQuery: nftOwnerQuery,
+	}
+	return listCollectionOwnersAPIHandler
+}

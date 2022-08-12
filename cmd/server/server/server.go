@@ -36,10 +36,11 @@ func (s *Server) Start() {
 		listHandler.Handle()
 	})
 
-	router.GET("/collections/:blockchain/:network/owners/:address", func(_ *gin.Context) {
-		// TODO: Handle listing owners under a collection
+	router.GET("/collections/:blockchain/:network/owners/:contract_address", func(ctx *gin.Context) {
+		listOwnerHandler := NewListCollectionOwnerAPIHandler(ctx, s.config, db)
+		listOwnerHandler.Handle()
 	})
-	router.GET("/nfts/:owner", func(_ *gin.Context) {
+	router.GET("/nfts/:owner_address", func(_ *gin.Context) {
 		// TODO: Handle listing nfts under an address
 	})
 
