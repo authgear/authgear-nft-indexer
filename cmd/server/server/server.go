@@ -40,8 +40,9 @@ func (s *Server) Start() {
 		listOwnerHandler := NewListCollectionOwnerAPIHandler(ctx, s.config, db)
 		listOwnerHandler.Handle()
 	})
-	router.GET("/nfts/:owner_address", func(_ *gin.Context) {
-		// TODO: Handle listing nfts under an address
+	router.GET("/nfts/:owner_address", func(ctx *gin.Context) {
+		listOwnerNFTHandler := NewListOwnerNFTAPIHandler(ctx, s.config, db)
+		listOwnerNFTHandler.Handle()
 	})
 
 	panic(router.Run(s.config.Server.ListenAddr))

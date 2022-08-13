@@ -48,3 +48,11 @@ func NewListCollectionOwnerAPIHandler(
 ) handler.ListCollectionOwnersAPIHandler {
 	panic(wire.Build(DependencySet))
 }
+
+func NewListOwnerNFTAPIHandler(
+	ctx *gin.Context,
+	config config.Config,
+	session *bun.DB,
+) handler.ListOwnerNFTAPIHandler {
+	panic(wire.Build(DependencySet))
+}

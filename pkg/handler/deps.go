@@ -9,4 +9,5 @@ var DependencySet = wire.NewSet(
 	wire.Struct(new(DeregisterCollectionAPIHandler), "*"),
 	wire.Struct(new(ListCollectionAPIHandler), "*"),
 	wire.Struct(new(ListCollectionOwnersAPIHandler), "*"),
+	wire.Struct(new(ListOwnerNFTAPIHandler), "*"),
 )
