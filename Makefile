@@ -44,6 +44,14 @@ check-tidy:
 	go mod tidy
 	git status --porcelain | grep '.*'; test $$? -eq 1
 
+.PHONY: binary
+binary:
+	rm -rf ./dist
+	mkdir ./dist
+	$(MAKE) build TARGET=indexer BIN_NAME=./dist/authgear-nft-indexer-"$(shell go env GOOS)"-"$(shell go env GOARCH)"-${GIT_HASH}
+	$(MAKE) build TARGET=server BIN_NAME=./dist/authgear-nft-server-"$(shell go env GOOS)"-"$(shell go env GOARCH)"-${GIT_HASH}
+
+
 .PHONY: build-image
 build-image:
 	# Add --pull so that we are using the latest base image.
