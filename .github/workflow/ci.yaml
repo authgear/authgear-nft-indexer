@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.18.2"
+      - run: make vendor
+      - run: make lint
+        if: ${{ !cancelled() }}
+      - run: make test
+        if: ${{ !cancelled() }}
+      - run: make check-tidy
+        if: ${{ !cancelled() }}
+
+  build-image:
+    runs-on: ubuntu-20.04
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - target: indexer
+            imageName: authgear-nft-indexer
+          - target: server
+            imageName: authgear-nft-server
+    env:
+      TARGET: ${{ matrix.target }}
+      IMAGE_NAME: ${{ matrix.imageName }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: make build-image TARGET=$TARGET IMAGE_NAME=$IMAGE_NAME
+      - run: make tag-image IMAGE_NAME=$IMAGE_NAME
+      - name: docker login
+        if: ${{ github.repository == 'authgear/authgear-nft-indexer' && github.event_name == 'push' }}
+        env:
+          QUAY_IO_USERNAME: ${{ secrets.QUAY_IO_USERNAME }}
+          QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
+        run: docker login -u "$QUAY_IO_USERNAME" -p "$QUAY_IO_PASSWORD" quay.io
+      - run: make push-image IMAGE_NAME=$IMAGE_NAME
+        if: ${{ github.repository == 'authgear/authgear-nft-indexer' && github.event_name == 'push' }}
+
+  release:
+    runs-on: ubuntu-20.04
+    needs: ["test"]
+    if: startsWith(github.ref, 'refs/tags/') && !startsWith(github.ref, 'refs/tags/staging-')
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.18.2"
+      - run: make vendor
+      - run: make binary
+      - uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            ./dist/*
