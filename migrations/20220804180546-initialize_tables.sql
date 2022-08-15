@@ -7,7 +7,7 @@ CREATE TABLE eth_nft_collection
 	name text NOT NULL,
 	blockchain text NOT NULL,
 	network text NOT NULL,
-	synced_block_height bigint NOT NULL,
+	from_block_height bigint NOT NULL,
 	created_at    timestamp without time zone NOT NULL,
     updated_at    timestamp without time zone NOT NULL
 );
@@ -72,8 +72,8 @@ CREATE OR REPLACE FUNCTION eth_update_nft_owner() RETURNS TRIGGER AS $$
 			-- Update collection db
 			UPDATE eth_nft_collection
 			-- Minus 1 to ensure the synchronization is not terminated in the middle of a block
-			SET synced_block_height = NEW.block_number - 1
-			WHERE network = NEW.network AND contract_address = NEW.contract_address;
+			SET from_block_height = NEW.block_number - 1
+			WHERE network = NEW.network AND contract_address = NEW.contract_address AND NEW.block_number - 1 >= 0;
 			
 		END IF;
 		RETURN NEW;
