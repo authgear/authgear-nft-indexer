@@ -1,16 +1,31 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
-	"github.com/authgear/authgear-server/pkg/api/apierrors"
-	"github.com/gin-gonic/gin"
+	authgearapi "github.com/authgear/authgear-server/pkg/api"
+	"github.com/authgear/authgear-server/pkg/util/httproute"
+	"github.com/authgear/authgear-server/pkg/util/log"
 	"github.com/jrallison/go-workers"
 )
+
+func ConfigureRegisterCollectionRoute(route httproute.Route) httproute.Route {
+	return route.
+		WithMethods("POST").
+		WithPathPattern("/register")
+}
+
+type RegisterCollectionHandlerLogger struct{ *log.Logger }
+
+func NewRegisterCollectionHandlerLogger(lf *log.Factory) RegisterCollectionHandlerLogger {
+	return RegisterCollectionHandlerLogger{lf.New("api-register-collection")}
+}
 
 type RegisterCollectionHandlerAlchemyAPI interface {
 	GetContractMetadata(blockchainNetwork model.BlockchainNetwork, contractAddress string) (*apimodel.ContractMetadataResponse, error)
@@ -21,17 +36,21 @@ type RegisterCollectionHandlerNFTCollectionMutator interface {
 }
 
 type RegisterCollectionAPIHandler struct {
-	Ctx                  *gin.Context
+	JSON                 JSONResponseWriter
+	Logger               RegisterCollectionHandlerLogger
 	Config               config.Config
 	AlchemyAPI           RegisterCollectionHandlerAlchemyAPI
 	NFTCollectionMutator RegisterCollectionHandlerNFTCollectionMutator
 }
 
-func (h *RegisterCollectionAPIHandler) Handle() {
+func (h *RegisterCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	var body apimodel.CollectionRegistrationRequestData
-	if err := h.Ctx.BindJSON(&body); err != nil {
-		fmt.Printf("invalid request body: %s", err)
-		HandleError(h.Ctx, 400, apierrors.NewInternalError("invalid request body"))
+
+	defer req.Body.Close()
+	err := json.NewDecoder(req.Body).Decode(&body)
+	if err != nil {
+		h.Logger.WithError(err).Error("Failed to decode request body")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 
@@ -44,8 +63,8 @@ func (h *RegisterCollectionAPIHandler) Handle() {
 	if contractName == "" {
 		contractMetadata, err := h.AlchemyAPI.GetContractMetadata(blockchainNetwork, body.ContractAddress)
 		if err != nil {
-			fmt.Printf("failed to get contract metadata: %s", err)
-			HandleError(h.Ctx, 400, apierrors.NewInternalError("failed to get contract metadata"))
+			h.Logger.WithError(err).Error("Failed to get contract metadata")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 			return
 		}
 
@@ -54,8 +73,8 @@ func (h *RegisterCollectionAPIHandler) Handle() {
 
 	collection, err := h.NFTCollectionMutator.InsertNFTCollection(blockchainNetwork, contractName, body.ContractAddress)
 	if err != nil {
-		fmt.Printf("Failed to insert nft collection: %s", err)
-		HandleError(h.Ctx, 500, apierrors.NewInternalError("failed to insert nft collection"))
+		h.Logger.WithError(err).Error("Failed to insert nft collection")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 
@@ -64,11 +83,14 @@ func (h *RegisterCollectionAPIHandler) Handle() {
 		fmt.Printf("failed to enqueue collection: %s", err)
 	}
 
-	h.Ctx.JSON(201, &apimodel.NFTCollection{
-		ID:              collection.ID,
-		Blockchain:      collection.Blockchain,
-		Network:         collection.Network,
-		Name:            collection.Name,
-		ContractAddress: collection.ContractAddress,
+	h.JSON.WriteResponse(resp, &authgearapi.Response{
+		Result: &apimodel.NFTCollection{
+			ID:              collection.ID,
+			Blockchain:      collection.Blockchain,
+			Network:         collection.Network,
+			Name:            collection.Name,
+			ContractAddress: collection.ContractAddress,
+		},
 	})
+
 }

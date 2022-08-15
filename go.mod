@@ -21,7 +21,9 @@ require (
 
 require (
 	github.com/google/subcommands v1.0.1 // indirect
+	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/tools v0.1.7 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect

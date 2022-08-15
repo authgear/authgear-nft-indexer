@@ -7,89 +7,131 @@
 package server
 
 import (
-	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/handler"
 	"github.com/authgear/authgear-nft-indexer/pkg/mutator"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
-	"github.com/gin-gonic/gin"
-	"github.com/uptrace/bun"
+	"github.com/authgear/authgear-server/pkg/util/httputil"
+	"net/http"
 )
 
 // Injectors from wire.go:
 
-func NewServer(config2 config.Config) Server {
-	server := Server{
-		config: config2,
+func NewRegisterCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
+	factory := NewLoggerFactory()
+	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
+	jsonResponseWriter := &httputil.JSONResponseWriter{
+		Logger: jsonResponseWriterLogger,
 	}
-	return server
-}
-
-func NewRegisterCollectionAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.RegisterCollectionAPIHandler {
+	registerCollectionHandlerLogger := handler.NewRegisterCollectionHandlerLogger(factory)
+	config := p.Config
 	alchemyAPI := &web3.AlchemyAPI{
-		Config: config2,
+		Config: config,
 	}
-	context := ProvideContext(ctx)
+	request := p.Request
+	context := handler.ProvideRequestContext(request)
+	db := p.Database
 	nftCollectionMutator := &mutator.NFTCollectionMutator{
 		Ctx:     context,
-		Session: session,
+		Session: db,
 	}
-	registerCollectionAPIHandler := handler.RegisterCollectionAPIHandler{
-		Ctx:                  ctx,
-		Config:               config2,
+	registerCollectionAPIHandler := &handler.RegisterCollectionAPIHandler{
+		JSON:                 jsonResponseWriter,
+		Logger:               registerCollectionHandlerLogger,
+		Config:               config,
 		AlchemyAPI:           alchemyAPI,
 		NFTCollectionMutator: nftCollectionMutator,
 	}
 	return registerCollectionAPIHandler
 }
 
-func NewDeregisterCollectionAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.DeregisterCollectionAPIHandler {
-	context := ProvideContext(ctx)
+func NewDeregisterCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
+	factory := NewLoggerFactory()
+	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
+	jsonResponseWriter := &httputil.JSONResponseWriter{
+		Logger: jsonResponseWriterLogger,
+	}
+	registerCollectionHandlerLogger := handler.NewRegisterCollectionHandlerLogger(factory)
+	config := p.Config
+	request := p.Request
+	context := handler.ProvideRequestContext(request)
+	db := p.Database
 	nftCollectionMutator := &mutator.NFTCollectionMutator{
 		Ctx:     context,
-		Session: session,
+		Session: db,
 	}
-	deregisterCollectionAPIHandler := handler.DeregisterCollectionAPIHandler{
-		Ctx:                  ctx,
+	deregisterCollectionAPIHandler := &handler.DeregisterCollectionAPIHandler{
+		JSON:                 jsonResponseWriter,
+		Logger:               registerCollectionHandlerLogger,
+		Config:               config,
 		NFTCollectionMutator: nftCollectionMutator,
 	}
 	return deregisterCollectionAPIHandler
 }
 
-func NewListCollectionAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.ListCollectionAPIHandler {
-	context := ProvideContext(ctx)
+func NewListCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
+	factory := NewLoggerFactory()
+	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
+	jsonResponseWriter := &httputil.JSONResponseWriter{
+		Logger: jsonResponseWriterLogger,
+	}
+	listCollectionHandlerLogger := handler.NewListCollectionHandlerLogger(factory)
+	request := p.Request
+	context := handler.ProvideRequestContext(request)
+	db := p.Database
 	nftCollectionQuery := &query.NFTCollectionQuery{
 		Ctx:     context,
-		Session: session,
+		Session: db,
 	}
-	listCollectionAPIHandler := handler.ListCollectionAPIHandler{
-		Ctx:                ctx,
+	listCollectionAPIHandler := &handler.ListCollectionAPIHandler{
+		JSON:               jsonResponseWriter,
+		Logger:             listCollectionHandlerLogger,
 		NFTCollectionQuery: nftCollectionQuery,
 	}
 	return listCollectionAPIHandler
 }
 
-func NewListCollectionOwnerAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.ListCollectionOwnersAPIHandler {
-	context := ProvideContext(ctx)
+func NewListCollectionOwnerAPIHandler(p *handler.RequestProvider) http.Handler {
+	factory := NewLoggerFactory()
+	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
+	jsonResponseWriter := &httputil.JSONResponseWriter{
+		Logger: jsonResponseWriterLogger,
+	}
+	listCollectionOwnerHandlerLogger := handler.NewListCollectionOwnerHandlerLogger(factory)
+	request := p.Request
+	context := handler.ProvideRequestContext(request)
+	db := p.Database
 	nftOwnerQuery := query.NFTOwnerQuery{
 		Ctx:     context,
-		Session: session,
+		Session: db,
 	}
-	listCollectionOwnersAPIHandler := handler.ListCollectionOwnersAPIHandler{
-		Ctx:           ctx,
+	listCollectionOwnersAPIHandler := &handler.ListCollectionOwnersAPIHandler{
+		JSON:          jsonResponseWriter,
+		Logger:        listCollectionOwnerHandlerLogger,
 		NFTOwnerQuery: nftOwnerQuery,
 	}
 	return listCollectionOwnersAPIHandler
 }
 
-func NewListOwnerNFTAPIHandler(ctx *gin.Context, config2 config.Config, session *bun.DB) handler.ListOwnerNFTAPIHandler {
-	context := ProvideContext(ctx)
+func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
+	factory := NewLoggerFactory()
+	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
+	jsonResponseWriter := &httputil.JSONResponseWriter{
+		Logger: jsonResponseWriterLogger,
+	}
+	listOwnerNFTHandlerLogger := handler.NewListOwnerNFTHandlerLogger(factory)
+	config := p.Config
+	request := p.Request
+	context := handler.ProvideRequestContext(request)
+	db := p.Database
 	nftOwnerQuery := query.NFTOwnerQuery{
 		Ctx:     context,
-		Session: session,
+		Session: db,
 	}
-	listOwnerNFTAPIHandler := handler.ListOwnerNFTAPIHandler{
-		Ctx:           ctx,
+	listOwnerNFTAPIHandler := &handler.ListOwnerNFTAPIHandler{
+		JSON:          jsonResponseWriter,
+		Logger:        listOwnerNFTHandlerLogger,
+		Config:        config,
 		NFTOwnerQuery: nftOwnerQuery,
 	}
 	return listOwnerNFTAPIHandler

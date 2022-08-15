@@ -1,42 +1,49 @@
 package handler
 
 import (
-	"fmt"
-	"strconv"
+	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
+	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
+	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
-	"github.com/gin-gonic/gin"
+	"github.com/authgear/authgear-server/pkg/util/httproute"
+	"github.com/authgear/authgear-server/pkg/util/log"
 )
 
+func ConfigureListOwnerNFTRoute(route httproute.Route) httproute.Route {
+	return route.
+		WithMethods("GET").
+		WithPathPattern("/nfts/:owner_address?*pagination")
+}
+
+type ListOwnerNFTHandlerLogger struct{ *log.Logger }
+
+func NewListOwnerNFTHandlerLogger(lf *log.Factory) ListOwnerNFTHandlerLogger {
+	return ListOwnerNFTHandlerLogger{lf.New("api-list-owner-nft")}
+}
+
 type ListOwnerNFTAPIHandler struct {
-	Ctx           *gin.Context
+	JSON          JSONResponseWriter
+	Logger        ListOwnerNFTHandlerLogger
+	Config        config.Config
 	NFTOwnerQuery query.NFTOwnerQuery
 }
 
-func (h *ListOwnerNFTAPIHandler) Handle() {
-	ownerAddress := h.Ctx.Param("owner_address")
+func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	ownerAddress := httproute.GetParam(req, "owner_address")
 
 	if ownerAddress == "" {
-		fmt.Printf("invalid owner address: %s", ownerAddress)
-		HandleError(h.Ctx, 400, apierrors.NewBadRequest("invalid owner address"))
+		h.Logger.Error("invalid owner address")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid owner address")})
 		return
 	}
 
-	limit := h.Ctx.DefaultQuery("limit", "100")
-	limitNum, err := strconv.Atoi(limit)
-	if err != nil {
-		fmt.Printf("invalid limit: %s", limit)
-		HandleError(h.Ctx, 400, apierrors.NewBadRequest("invalid limit"))
-		return
-	}
-
-	offset := h.Ctx.DefaultQuery("offset", "0")
-	offsetNum, err := strconv.Atoi(offset)
-	if err != nil {
-		fmt.Printf("invalid offset: %s", offset)
-		HandleError(h.Ctx, 400, apierrors.NewBadRequest("invalid offset"))
+	pagination := httproute.GetParam(req, "pagination")
+	if pagination == "" {
+		h.Logger.Error("invalid pagination")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid pagination")})
 		return
 	}
 
@@ -44,10 +51,12 @@ func (h *ListOwnerNFTAPIHandler) Handle() {
 
 	qb = qb.WithOwnerAddress(ownerAddress)
 
-	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb, limitNum, offsetNum)
+	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb, 1, 1)
+
 	if err != nil {
-		fmt.Printf("failed to list nft owners: %s", err)
-		HandleError(h.Ctx, 500, apierrors.NewInternalError("failed to list nft owners"))
+		h.Logger.Error("failed to list nft owners")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to list nft owners")})
+		return
 		return
 	}
 
@@ -74,8 +83,10 @@ func (h *ListOwnerNFTAPIHandler) Handle() {
 		})
 	}
 
-	h.Ctx.JSON(200, &apimodel.CollectionOwnersResponse{
-		Items:      nftOwners,
-		TotalCount: owners.TotalCount,
+	h.JSON.WriteResponse(resp, &authgearapi.Response{
+		Result: &apimodel.CollectionOwnersResponse{
+			Items:      nftOwners,
+			TotalCount: owners.TotalCount,
+		},
 	})
 }

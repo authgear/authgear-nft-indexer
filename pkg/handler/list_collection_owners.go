@@ -1,28 +1,42 @@
 package handler
 
 import (
-	"fmt"
-	"strconv"
+	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
+	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
-	"github.com/gin-gonic/gin"
+	"github.com/authgear/authgear-server/pkg/util/httproute"
+	"github.com/authgear/authgear-server/pkg/util/log"
 )
 
+func ConfigureListCollectionOwnerRoute(route httproute.Route) httproute.Route {
+	return route.
+		WithMethods("GET").
+		WithPathPattern("/collections/:blockchain/:network/owners/:contract_address?*pagination")
+}
+
+type ListCollectionOwnerHandlerLogger struct{ *log.Logger }
+
+func NewListCollectionOwnerHandlerLogger(lf *log.Factory) ListCollectionOwnerHandlerLogger {
+	return ListCollectionOwnerHandlerLogger{lf.New("api-list-collection-owner")}
+}
+
 type ListCollectionOwnersAPIHandler struct {
-	Ctx           *gin.Context
+	JSON          JSONResponseWriter
+	Logger        ListCollectionOwnerHandlerLogger
 	NFTOwnerQuery query.NFTOwnerQuery
 }
 
-func (h *ListCollectionOwnersAPIHandler) Handle() {
-	blockchain := h.Ctx.Param("blockchain")
-	network := h.Ctx.Param("network")
+func (h *ListCollectionOwnersAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	blockchain := httproute.GetParam(req, "blockchain")
+	network := httproute.GetParam(req, "network")
 
 	if blockchain == "" || network == "" {
-		fmt.Printf("invalid blockchain or network: %s/%s", blockchain, network)
-		HandleError(h.Ctx, 400, apierrors.NewBadRequest("invalid blockchain network"))
+		h.Logger.Error("failed to list nft collections")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid blockchain or network")})
 		return
 	}
 
@@ -30,27 +44,18 @@ func (h *ListCollectionOwnersAPIHandler) Handle() {
 		Blockchain: blockchain,
 		Network:    network,
 	}
-	contractAddress := h.Ctx.Param("contract_address")
+	contractAddress := httproute.GetParam(req, "contract_address")
 
 	if contractAddress == "" {
-		fmt.Printf("invalid contract address: %s", contractAddress)
-		HandleError(h.Ctx, 400, apierrors.NewBadRequest("invalid contract address"))
+		h.Logger.Error("invalid contract address")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract address")})
 		return
 	}
 
-	limit := h.Ctx.DefaultQuery("limit", "100")
-	limitNum, err := strconv.Atoi(limit)
-	if err != nil {
-		fmt.Printf("invalid limit: %s", limit)
-		HandleError(h.Ctx, 400, apierrors.NewBadRequest("invalid limit"))
-		return
-	}
-
-	offset := h.Ctx.DefaultQuery("offset", "0")
-	offsetNum, err := strconv.Atoi(offset)
-	if err != nil {
-		fmt.Printf("invalid offset: %s", offset)
-		HandleError(h.Ctx, 400, apierrors.NewBadRequest("invalid offset"))
+	pagination := httproute.GetParam(req, "pagination")
+	if pagination == "" {
+		h.Logger.Error("invalid pagination")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid pagination")})
 		return
 	}
 
@@ -58,10 +63,10 @@ func (h *ListCollectionOwnersAPIHandler) Handle() {
 
 	qb = qb.WithBlockchainNetwork(blockchainNetwork).WithContractAddress(contractAddress)
 
-	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb, limitNum, offsetNum)
+	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb, 1, 1)
 	if err != nil {
-		fmt.Printf("failed to list nft owners: %s", err)
-		HandleError(h.Ctx, 500, apierrors.NewInternalError("failed to list nft owners"))
+		h.Logger.Error("failed to list nft owners")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 
@@ -88,8 +93,10 @@ func (h *ListCollectionOwnersAPIHandler) Handle() {
 		})
 	}
 
-	h.Ctx.JSON(200, &apimodel.CollectionOwnersResponse{
-		Items:      nftOwners,
-		TotalCount: owners.TotalCount,
+	h.JSON.WriteResponse(resp, &authgearapi.Response{
+		Result: &apimodel.CollectionOwnersResponse{
+			Items:      nftOwners,
+			TotalCount: owners.TotalCount,
+		},
 	})
 }

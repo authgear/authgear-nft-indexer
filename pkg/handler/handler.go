@@ -1,9 +1,32 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
 
-func HandleError(ctx *gin.Context, code int, err error) {
-	ctx.AbortWithStatusJSON(code, gin.H{ // nolint: errcheck
-		"error": err.Error(),
+	"github.com/authgear/authgear-nft-indexer/pkg/config"
+	authgearapi "github.com/authgear/authgear-server/pkg/api"
+	"github.com/uptrace/bun"
+)
+
+type JSONResponseWriter interface {
+	WriteResponse(rw http.ResponseWriter, resp *authgearapi.Response)
+}
+
+type RequestProvider struct {
+	Config         config.Config
+	Database       *bun.DB
+	Request        *http.Request
+	ResponseWriter http.ResponseWriter
+}
+
+func RouteHandler(factory func(*RequestProvider) http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p := &RequestProvider{
+			Request:        r,
+			ResponseWriter: w,
+		}
+
+		router := factory(p)
+		router.ServeHTTP(w, r)
 	})
 }

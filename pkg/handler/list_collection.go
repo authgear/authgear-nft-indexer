@@ -1,27 +1,41 @@
 package handler
 
 import (
-	"fmt"
+	"net/http"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
-	"github.com/authgear/authgear-server/pkg/api/apierrors"
-	"github.com/gin-gonic/gin"
+	authgearapi "github.com/authgear/authgear-server/pkg/api"
+	"github.com/authgear/authgear-server/pkg/util/httproute"
+	"github.com/authgear/authgear-server/pkg/util/log"
 )
+
+func ConfigureListCollectionRoute(route httproute.Route) httproute.Route {
+	return route.
+		WithMethods("GET").
+		WithPathPattern("/collections")
+}
+
+type ListCollectionHandlerLogger struct{ *log.Logger }
+
+func NewListCollectionHandlerLogger(lf *log.Factory) ListCollectionHandlerLogger {
+	return ListCollectionHandlerLogger{lf.New("api-list-collection")}
+}
 
 type ListCollectionHandlerCollectionsQuery interface {
 	QueryNFTCollections() ([]eth.NFTCollection, error)
 }
 type ListCollectionAPIHandler struct {
-	Ctx                *gin.Context
+	JSON               JSONResponseWriter
+	Logger             ListCollectionHandlerLogger
 	NFTCollectionQuery ListCollectionHandlerCollectionsQuery
 }
 
-func (h *ListCollectionAPIHandler) Handle() {
+func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	collections, err := h.NFTCollectionQuery.QueryNFTCollections()
 	if err != nil {
-		fmt.Printf("failed to list nft collections: %s", err)
-		HandleError(h.Ctx, 500, apierrors.NewInternalError("failed to list nft collections"))
+		h.Logger.Error("failed to list nft collections")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 
@@ -35,7 +49,9 @@ func (h *ListCollectionAPIHandler) Handle() {
 		})
 	}
 
-	h.Ctx.JSON(200, &model.CollectionListResponse{
-		Items: nftCollections,
+	h.JSON.WriteResponse(resp, &authgearapi.Response{
+		Result: &model.CollectionListResponse{
+			Items: nftCollections,
+		},
 	})
 }

@@ -19,8 +19,11 @@ var cmdStart = &cobra.Command{
 		}
 		config := config.NewConfig(configPath)
 
-		server := server.NewServer(config)
-		server.Start()
+		ctrl := server.Controller{
+			Config: config,
+		}
+
+		ctrl.Start()
 		return nil
 	},
 }

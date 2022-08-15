@@ -1,22 +1,21 @@
 package server
 
 import (
-	"context"
-
 	"github.com/authgear/authgear-nft-indexer/pkg/handler"
 	"github.com/authgear/authgear-nft-indexer/pkg/mutator"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
-	"github.com/gin-gonic/gin"
+	"github.com/authgear/authgear-server/pkg/util/httputil"
+	"github.com/authgear/authgear-server/pkg/util/log"
 	"github.com/google/wire"
 )
 
-func ProvideContext(context *gin.Context) context.Context {
-	return context.Request.Context()
+func NewLoggerFactory() *log.Factory {
+	return log.NewFactory(log.LevelInfo)
 }
 
 var DependencySet = wire.NewSet(
-
+	NewLoggerFactory,
 	query.DependencySet,
 	wire.Bind(new(handler.ListCollectionHandlerCollectionsQuery), new(*query.NFTCollectionQuery)),
 
@@ -28,6 +27,6 @@ var DependencySet = wire.NewSet(
 	wire.Bind(new(handler.RegisterCollectionHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
 
 	handler.DependencySet,
-	ProvideContext,
-	wire.Struct(new(Server), "*"),
+	httputil.DependencySet,
+	wire.Bind(new(handler.JSONResponseWriter), new(*httputil.JSONResponseWriter)),
 )
