@@ -48,7 +48,7 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 	for network, contractAddresses := range nftContractAddressesByNetwork {
 		smallestBlock := smallestBlockByNetwork[network]
 
-		syncedBlockHex, err := hexstring.NewFromBigInt(smallestBlock)
+		fromBlockHex, err := hexstring.NewFromBigInt(smallestBlock)
 		if err != nil {
 			log.Fatalf("SyncNFTCollections: failed to convert smallest block to hex string: %s", err)
 			continue
@@ -58,7 +58,7 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 			Blockchain:        network.Blockchain,
 			Network:           network.Network,
 			ContractAddresses: contractAddresses,
-			SyncedBlock:       syncedBlockHex.String(),
+			FromBlock:         fromBlockHex.String(),
 			PageKey:           "",
 		}, workers.EnqueueOptions{Retry: true})
 
