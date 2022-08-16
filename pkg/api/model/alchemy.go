@@ -53,3 +53,15 @@ type AssetTransferResponse struct {
 	Result AssetTransferResult `json:"result"`
 	Error  *AssetTransferError `json:"error,omitempty"`
 }
+
+type ContractMetadata struct {
+	Name        string `json:"name"`
+	Symbol      string `json:"symbol"`
+	TotalSupply string `json:"totalSupply"`
+	TokenType   string `json:"tokenType"`
+}
+
+type ContractMetadataResponse struct {
+	Address          string           `json:"address"`
+	ContractMetadata ContractMetadata `json:"contractMetadata"`
+}

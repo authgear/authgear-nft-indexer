@@ -14,5 +14,5 @@ server:
 alchemy:
   - blockchain: ethereum
     network: mainnet
-    endpoint: https://eth-mainnet.g.alchemy.com/v2/
+    endpoint: https://eth-mainnet.g.alchemy.com
     api_key:
