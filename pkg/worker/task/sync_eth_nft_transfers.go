@@ -20,14 +20,14 @@ type SycnNFTTransferTransferMutator interface {
 }
 
 type SycnNFTTransferAlchemyAPI interface {
-	GetNFTTransfers(blockchainNetwork model.BlockchainNetwork, contractAddresses []string, syncedBlock string, blockNum string, pageKey string, maxCount int64) (*apimodel.AssetTransferResponse, error)
+	GetNFTTransfers(blockchainNetwork model.BlockchainNetwork, contractAddresses []string, fromBlock string, toBlock string, pageKey string, maxCount int64) (*apimodel.AssetTransferResponse, error)
 }
 
 type SyncETHNFTTransfersMessageArgs struct {
 	Blockchain        string   `json:"blockchain"`
 	Network           string   `json:"network"`
 	ContractAddresses []string `json:"contract_address"`
-	SyncedBlock       string   `json:"synced_block"`
+	FromBlock         string   `json:"from_block"`
 	PageKey           string   `json:"page_key"`
 }
 
@@ -59,7 +59,7 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 		Network:    castedArgs.Network,
 	}
 
-	res, err := h.AlchemyAPI.GetNFTTransfers(blockchainNetwork, castedArgs.ContractAddresses, castedArgs.SyncedBlock, "latest", castedArgs.PageKey, TransferPageSize)
+	res, err := h.AlchemyAPI.GetNFTTransfers(blockchainNetwork, castedArgs.ContractAddresses, castedArgs.FromBlock, "latest", castedArgs.PageKey, TransferPageSize)
 	if err != nil {
 		panic(fmt.Sprintf("SyncNFTTranfers: failed to get NFT transfers: %s", err))
 	}
@@ -97,7 +97,7 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 			Blockchain:        castedArgs.Blockchain,
 			Network:           castedArgs.Network,
 			ContractAddresses: castedArgs.ContractAddresses,
-			SyncedBlock:       castedArgs.SyncedBlock,
+			FromBlock:         castedArgs.FromBlock,
 			PageKey:           res.Result.PageKey,
 		})
 

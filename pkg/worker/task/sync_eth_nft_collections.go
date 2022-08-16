@@ -40,15 +40,15 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 		}
 		nftContractAddressesByNetwork[blockchainNetwork] = append(nftContractAddressesByNetwork[blockchainNetwork], collection.ContractAddress)
 
-		if smallestBlockByNetwork[blockchainNetwork] == nil || smallestBlockByNetwork[blockchainNetwork].Cmp(collection.SyncedBlockHeight.ToMathBig()) > 0 {
-			smallestBlockByNetwork[blockchainNetwork] = collection.SyncedBlockHeight.ToMathBig()
+		if smallestBlockByNetwork[blockchainNetwork] == nil || smallestBlockByNetwork[blockchainNetwork].Cmp(collection.FromBlockHeight.ToMathBig()) > 0 {
+			smallestBlockByNetwork[blockchainNetwork] = collection.FromBlockHeight.ToMathBig()
 		}
 	}
 
 	for network, contractAddresses := range nftContractAddressesByNetwork {
 		smallestBlock := smallestBlockByNetwork[network]
 
-		syncedBlockHex, err := hexstring.NewFromBigInt(smallestBlock)
+		fromBlockHex, err := hexstring.NewFromBigInt(smallestBlock)
 		if err != nil {
 			log.Fatalf("SyncNFTCollections: failed to convert smallest block to hex string: %s", err)
 			continue
@@ -58,7 +58,7 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 			Blockchain:        network.Blockchain,
 			Network:           network.Network,
 			ContractAddresses: contractAddresses,
-			SyncedBlock:       syncedBlockHex.String(),
+			FromBlock:         fromBlockHex.String(),
 			PageKey:           "",
 		}, workers.EnqueueOptions{Retry: true})
 
