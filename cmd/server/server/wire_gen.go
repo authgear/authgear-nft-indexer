@@ -23,14 +23,14 @@ func NewHealthCheckAPIHandler(p *handler.RequestProvider) http.Handler {
 	jsonResponseWriter := &httputil.JSONResponseWriter{
 		Logger: jsonResponseWriterLogger,
 	}
-	registerCollectionHandlerLogger := handler.NewRegisterCollectionHandlerLogger(factory)
+	healthCheckHandlerLogger := handler.NewHealthCheckHandlerLogger(factory)
 	config := p.Config
 	db := p.Database
 	request := p.Request
 	context := handler.ProvideRequestContext(request)
 	healthCheckAPIHandler := &handler.HealthCheckAPIHandler{
 		JSON:     jsonResponseWriter,
-		Logger:   registerCollectionHandlerLogger,
+		Logger:   healthCheckHandlerLogger,
 		Config:   config,
 		Database: db,
 		Context:  context,
@@ -38,13 +38,13 @@ func NewHealthCheckAPIHandler(p *handler.RequestProvider) http.Handler {
 	return healthCheckAPIHandler
 }
 
-func NewRegisterCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
+func NewWatchCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 	factory := p.LogFactory
 	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
 	jsonResponseWriter := &httputil.JSONResponseWriter{
 		Logger: jsonResponseWriterLogger,
 	}
-	registerCollectionHandlerLogger := handler.NewRegisterCollectionHandlerLogger(factory)
+	watchCollectionHandlerLogger := handler.NewWatchCollectionHandlerLogger(factory)
 	config := p.Config
 	alchemyAPI := &web3.AlchemyAPI{
 		Config: config,
@@ -56,38 +56,14 @@ func NewRegisterCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 		Ctx:     context,
 		Session: db,
 	}
-	registerCollectionAPIHandler := &handler.RegisterCollectionAPIHandler{
+	watchCollectionAPIHandler := &handler.WatchCollectionAPIHandler{
 		JSON:                 jsonResponseWriter,
-		Logger:               registerCollectionHandlerLogger,
+		Logger:               watchCollectionHandlerLogger,
 		Config:               config,
 		AlchemyAPI:           alchemyAPI,
 		NFTCollectionMutator: nftCollectionMutator,
 	}
-	return registerCollectionAPIHandler
-}
-
-func NewDeregisterCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
-	factory := p.LogFactory
-	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
-	jsonResponseWriter := &httputil.JSONResponseWriter{
-		Logger: jsonResponseWriterLogger,
-	}
-	registerCollectionHandlerLogger := handler.NewRegisterCollectionHandlerLogger(factory)
-	config := p.Config
-	request := p.Request
-	context := handler.ProvideRequestContext(request)
-	db := p.Database
-	nftCollectionMutator := &mutator.NFTCollectionMutator{
-		Ctx:     context,
-		Session: db,
-	}
-	deregisterCollectionAPIHandler := &handler.DeregisterCollectionAPIHandler{
-		JSON:                 jsonResponseWriter,
-		Logger:               registerCollectionHandlerLogger,
-		Config:               config,
-		NFTCollectionMutator: nftCollectionMutator,
-	}
-	return deregisterCollectionAPIHandler
+	return watchCollectionAPIHandler
 }
 
 func NewListCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
@@ -110,28 +86,6 @@ func NewListCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 		NFTCollectionQuery: nftCollectionQuery,
 	}
 	return listCollectionAPIHandler
-}
-
-func NewListCollectionOwnerAPIHandler(p *handler.RequestProvider) http.Handler {
-	factory := p.LogFactory
-	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
-	jsonResponseWriter := &httputil.JSONResponseWriter{
-		Logger: jsonResponseWriterLogger,
-	}
-	listCollectionOwnerHandlerLogger := handler.NewListCollectionOwnerHandlerLogger(factory)
-	request := p.Request
-	context := handler.ProvideRequestContext(request)
-	db := p.Database
-	nftOwnerQuery := query.NFTOwnerQuery{
-		Ctx:     context,
-		Session: db,
-	}
-	listCollectionOwnersAPIHandler := &handler.ListCollectionOwnersAPIHandler{
-		JSON:          jsonResponseWriter,
-		Logger:        listCollectionOwnerHandlerLogger,
-		NFTOwnerQuery: nftOwnerQuery,
-	}
-	return listCollectionOwnersAPIHandler
 }
 
 func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {

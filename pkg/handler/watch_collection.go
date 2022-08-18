@@ -15,36 +15,36 @@ import (
 	"github.com/jrallison/go-workers"
 )
 
-func ConfigureRegisterCollectionRoute(route httproute.Route) httproute.Route {
+func ConfigureWatchCollectionRoute(route httproute.Route) httproute.Route {
 	return route.
 		WithMethods("POST").
-		WithPathPattern("/register")
+		WithPathPattern("/watch")
 }
 
-type RegisterCollectionHandlerLogger struct{ *log.Logger }
+type WatchCollectionHandlerLogger struct{ *log.Logger }
 
-func NewRegisterCollectionHandlerLogger(lf *log.Factory) RegisterCollectionHandlerLogger {
-	return RegisterCollectionHandlerLogger{lf.New("api-register-collection")}
+func NewWatchCollectionHandlerLogger(lf *log.Factory) WatchCollectionHandlerLogger {
+	return WatchCollectionHandlerLogger{lf.New("api-watch-collection")}
 }
 
-type RegisterCollectionHandlerAlchemyAPI interface {
+type WatchCollectionHandlerAlchemyAPI interface {
 	GetContractMetadata(blockchainNetwork model.BlockchainNetwork, contractAddress string) (*apimodel.ContractMetadataResponse, error)
 }
 
-type RegisterCollectionHandlerNFTCollectionMutator interface {
+type WatchCollectionHandlerNFTCollectionMutator interface {
 	InsertNFTCollection(blockchainNetwork model.BlockchainNetwork, name string, contractAddress string) (*ethmodel.NFTCollection, error)
 }
 
-type RegisterCollectionAPIHandler struct {
+type WatchCollectionAPIHandler struct {
 	JSON                 JSONResponseWriter
-	Logger               RegisterCollectionHandlerLogger
+	Logger               WatchCollectionHandlerLogger
 	Config               config.Config
-	AlchemyAPI           RegisterCollectionHandlerAlchemyAPI
-	NFTCollectionMutator RegisterCollectionHandlerNFTCollectionMutator
+	AlchemyAPI           WatchCollectionHandlerAlchemyAPI
+	NFTCollectionMutator WatchCollectionHandlerNFTCollectionMutator
 }
 
-func (h *RegisterCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	var body apimodel.CollectionRegistrationRequestData
+func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	var body apimodel.WatchCollectionRequestData
 
 	defer req.Body.Close()
 	err := json.NewDecoder(req.Body).Decode(&body)
