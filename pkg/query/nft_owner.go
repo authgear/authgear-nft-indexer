@@ -30,9 +30,9 @@ func (b NFTOwnerQueryBuilder) WithContractAddresses(contractAddresses []string) 
 	}
 }
 
-func (b NFTOwnerQueryBuilder) WithOwnerAddress(ownerAddress string) NFTOwnerQueryBuilder {
+func (b NFTOwnerQueryBuilder) WithOwnerAddresses(ownerAddresses []string) NFTOwnerQueryBuilder {
 	return NFTOwnerQueryBuilder{
-		b.Where("owner_address = ?", ownerAddress),
+		b.Where("owner_address IN (?)", bun.In(ownerAddresses)),
 	}
 }
 

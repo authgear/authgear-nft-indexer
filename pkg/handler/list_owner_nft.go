@@ -25,7 +25,7 @@ type CollectionIdentifier struct {
 func ConfigureListOwnerNFTRoute(route httproute.Route) httproute.Route {
 	return route.
 		WithMethods("GET").
-		WithPathPattern("/nfts/:owner_address")
+		WithPathPattern("/nfts")
 }
 
 type ListOwnerNFTHandlerLogger struct{ *log.Logger }
@@ -46,14 +46,6 @@ type ListOwnerNFTAPIHandler struct {
 }
 
 func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	ownerAddress := httproute.GetParam(req, "owner_address")
-
-	if ownerAddress == "" {
-		h.Logger.Error("invalid owner address")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid owner address")})
-		return
-	}
-
 	urlValues := req.URL.Query()
 
 	limit, offset, err := urlutil.ParsePaginationParams(urlValues, 10, 0)
@@ -70,6 +62,14 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 			contractAddresses = append(contractAddresses, contractAddress)
 		}
 
+	}
+
+	ownerAddresses := make([]string, 0)
+	ownerAddressesStr := urlValues.Get("owner_addresses")
+	for _, ownerAddress := range strings.Split(ownerAddressesStr, ",") {
+		if ownerAddress != "" {
+			ownerAddresses = append(ownerAddresses, ownerAddress)
+		}
 	}
 
 	blockchain := urlValues.Get("blockchain")
@@ -94,8 +94,6 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	// Start building query
 	qb := h.NFTOwnerQuery.NewQueryBuilder()
 
-	qb = qb.WithOwnerAddress(ownerAddress)
-
 	if blockchain != "" && network != "" {
 		qb = qb.WithBlockchainNetwork(model.BlockchainNetwork{
 			Blockchain: blockchain,
@@ -105,6 +103,10 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 
 	if len(contractAddresses) > 0 {
 		qb = qb.WithContractAddresses(contractAddresses)
+	}
+
+	if len(ownerAddresses) > 0 {
+		qb = qb.WithOwnerAddresses(ownerAddresses)
 	}
 
 	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb, limit, offset)
