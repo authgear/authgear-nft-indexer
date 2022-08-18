@@ -24,7 +24,7 @@ type SyncETHNFTCollectionTaskHandler struct {
 func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 	collections, err := h.NftCollectionQuery.QueryNFTCollections()
 	if err != nil {
-		panic(fmt.Sprintf("SyncNFTCollections: failed to query NFT collections: %s", err))
+		panic(fmt.Errorf("SyncNFTCollections: failed to query NFT collections: %w", err))
 	}
 
 	if len(collections) == 0 {
@@ -50,7 +50,7 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 
 		fromBlockHex, err := hexstring.NewFromBigInt(smallestBlock)
 		if err != nil {
-			log.Fatalf("SyncNFTCollections: failed to convert smallest block to hex string: %s", err)
+			log.Fatalf("SyncNFTCollections: failed to convert smallest block to hex string: %+v", err)
 			continue
 		}
 
@@ -63,7 +63,7 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 		}, workers.EnqueueOptions{Retry: true})
 
 		if err != nil {
-			panic(fmt.Sprintf("SyncNFTCollections: failed to enqueue NFT transfers: %s", err))
+			panic(fmt.Errorf("SyncNFTCollections: failed to enqueue NFT transfers: %w", err))
 		}
 	}
 }

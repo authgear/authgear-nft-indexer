@@ -80,7 +80,7 @@ func (h *RegisterCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *
 
 	_, err = workers.Enqueue(h.Config.Worker.CollectionQueueName, "", nil)
 	if err != nil {
-		fmt.Printf("failed to enqueue collection: %s", err)
+		fmt.Printf("failed to enqueue collection: %+v", err)
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{

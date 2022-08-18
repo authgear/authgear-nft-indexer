@@ -101,7 +101,7 @@ var cmdMigrateDown = &cobra.Command{
 		} else {
 			numMigrations, err = strconv.Atoi(args[0])
 			if err != nil {
-				err = fmt.Errorf("invalid number of migrations specified: %s", err)
+				err = fmt.Errorf("invalid number of migrations specified: %w", err)
 				return
 			} else if numMigrations <= 0 {
 				err = fmt.Errorf("no migrations specified to revert")

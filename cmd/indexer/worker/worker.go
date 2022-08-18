@@ -33,7 +33,7 @@ func (w *Worker) Start() {
 			panic(err)
 		}
 	}); err != nil {
-		log.Fatalf("failed to schedule job: %s", err)
+		log.Fatalf("failed to schedule job: %+v", err)
 	}
 
 	scheduler.StartAsync()
