@@ -7,6 +7,10 @@ LDFLAGS ?= "-X github.com/authgear/authgear-nft-indexer/pkg/version.Version=${GI
 start-worker:
 	go run ./cmd/indexer start
 
+.PHONY: start-server
+start-server:
+	go run ./cmd/server start
+
 .PHONY: setup
 setup: vendor
 	cp authgear-nft-indexer.yaml.example authgear-nft-indexer.yaml

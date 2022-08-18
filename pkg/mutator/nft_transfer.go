@@ -13,6 +13,10 @@ type NFTTransferMutator struct {
 }
 
 func (q *NFTTransferMutator) InsertNFTTransfers(transfers []eth.NFTTransfer) error {
+	if len(transfers) == 0 {
+		return nil
+	}
+
 	err := q.Session.RunInTx(q.Ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(&transfers).

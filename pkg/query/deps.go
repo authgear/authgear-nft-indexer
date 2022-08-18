@@ -6,4 +6,5 @@ import (
 
 var DependencySet = wire.NewSet(
 	wire.Struct(new(NFTCollectionQuery), "*"),
+	wire.Struct(new(NFTOwnerQuery), "*"),
 )

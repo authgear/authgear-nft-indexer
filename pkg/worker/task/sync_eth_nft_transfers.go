@@ -45,13 +45,13 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 
 	argsJSON, err := args.Json.Encode()
 	if err != nil {
-		panic(fmt.Sprintf("SyncNFTTranfers: failed to serialize args: %s", err))
+		panic(fmt.Errorf("SyncNFTTranfers: failed to serialize args: %w", err))
 	}
 
 	var castedArgs SyncETHNFTTransfersMessageArgs
 	err = json.Unmarshal(argsJSON, &castedArgs)
 	if err != nil {
-		panic(fmt.Sprintf("SyncNFTTranfers: failed to unmarshal args: %s", err))
+		panic(fmt.Errorf("SyncNFTTranfers: failed to unmarshal args: %w", err))
 	}
 
 	blockchainNetwork := model.BlockchainNetwork{
@@ -61,7 +61,7 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 
 	res, err := h.AlchemyAPI.GetNFTTransfers(blockchainNetwork, castedArgs.ContractAddresses, castedArgs.FromBlock, "latest", castedArgs.PageKey, TransferPageSize)
 	if err != nil {
-		panic(fmt.Sprintf("SyncNFTTranfers: failed to get NFT transfers: %s", err))
+		panic(fmt.Errorf("SyncNFTTranfers: failed to get NFT transfers: %w", err))
 	}
 
 	nftTransfers := make([]ethmodel.NFTTransfer, 0, len(res.Result.Transfers))
@@ -89,7 +89,7 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 	// we will skip it for now.
 	err = h.NftTransferMutator.InsertNFTTransfers(nftTransfers)
 	if err != nil {
-		panic(fmt.Sprintf("SyncNFTTranfers: failed to insert NFT transfers: %s", err))
+		panic(fmt.Errorf("SyncNFTTranfers: failed to insert NFT transfers: %w", err))
 	}
 
 	if res.Result.PageKey != "" {
@@ -102,7 +102,7 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 		})
 
 		if err != nil {
-			panic(fmt.Sprintf("SyncNFTTranfers: failed to enqueue NFT transfers: %s", err))
+			panic(fmt.Errorf("SyncNFTTranfers: failed to enqueue NFT transfers: %w", err))
 		}
 	}
 }
