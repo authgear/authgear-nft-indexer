@@ -43,6 +43,7 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 	for _, collection := range collections {
 		nftCollections = append(nftCollections, model.NFTCollection{
 			ID:              collection.ID,
+			Blockchain:      collection.Blockchain,
 			Network:         collection.Network,
 			Name:            collection.Name,
 			ContractAddress: collection.ContractAddress,
