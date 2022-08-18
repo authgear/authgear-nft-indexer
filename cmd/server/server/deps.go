@@ -12,6 +12,7 @@ import (
 var DependencySet = wire.NewSet(
 	query.DependencySet,
 	wire.Bind(new(handler.ListCollectionHandlerCollectionsQuery), new(*query.NFTCollectionQuery)),
+	wire.Bind(new(handler.ListOwnerNFTHandlerNFTCollectionQuery), new(*query.NFTCollectionQuery)),
 
 	mutator.DependencySet,
 	wire.Bind(new(handler.WatchCollectionHandlerNFTCollectionMutator), new(*mutator.NFTCollectionMutator)),

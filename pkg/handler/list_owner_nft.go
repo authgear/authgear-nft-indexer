@@ -7,6 +7,7 @@ import (
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
+	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	urlutil "github.com/authgear/authgear-nft-indexer/pkg/util/url"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
@@ -14,6 +15,12 @@ import (
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 )
+
+type CollectionIdentifier struct {
+	Blockchain      string
+	Network         string
+	ContractAddress string
+}
 
 func ConfigureListOwnerNFTRoute(route httproute.Route) httproute.Route {
 	return route.
@@ -27,11 +34,15 @@ func NewListOwnerNFTHandlerLogger(lf *log.Factory) ListOwnerNFTHandlerLogger {
 	return ListOwnerNFTHandlerLogger{lf.New("api-list-owner-nft")}
 }
 
+type ListOwnerNFTHandlerNFTCollectionQuery interface {
+	QueryNFTCollections() ([]ethmodel.NFTCollection, error)
+}
 type ListOwnerNFTAPIHandler struct {
-	JSON          JSONResponseWriter
-	Logger        ListOwnerNFTHandlerLogger
-	Config        config.Config
-	NFTOwnerQuery query.NFTOwnerQuery
+	JSON               JSONResponseWriter
+	Logger             ListOwnerNFTHandlerLogger
+	Config             config.Config
+	NFTOwnerQuery      query.NFTOwnerQuery
+	NFTCollectionQuery ListOwnerNFTHandlerNFTCollectionQuery
 }
 
 func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
@@ -64,6 +75,23 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	blockchain := urlValues.Get("blockchain")
 	network := urlValues.Get("network")
 
+	collections, err := h.NFTCollectionQuery.QueryNFTCollections()
+	if err != nil {
+		h.Logger.WithError(err).Error("failed to query nft collections")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		return
+	}
+
+	collectionMap := make(map[CollectionIdentifier]ethmodel.NFTCollection)
+	for _, collection := range collections {
+		collectionMap[CollectionIdentifier{
+			Blockchain:      collection.Blockchain,
+			Network:         collection.Network,
+			ContractAddress: collection.ContractAddress,
+		}] = collection
+	}
+
+	// Start building query
 	qb := h.NFTOwnerQuery.NewQueryBuilder()
 
 	qb = qb.WithOwnerAddress(ownerAddress)
@@ -89,6 +117,12 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 
 	nftOwners := make([]apimodel.NFTOwner, 0, len(owners.Items))
 	for _, owner := range owners.Items {
+		collection := collectionMap[CollectionIdentifier{
+			Blockchain:      owner.Blockchain,
+			Network:         owner.Network,
+			ContractAddress: owner.ContractAddress,
+		}]
+
 		nftOwners = append(nftOwners, apimodel.NFTOwner{
 			AccountIdentifier: apimodel.AccountIdentifier{
 				Address: owner.OwnerAddress,
@@ -98,7 +132,8 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 				Network:    owner.Network,
 			},
 			Contract: apimodel.Contract{
-				Address: owner.ContractAddress,
+				Address: collection.ContractAddress,
+				Name:    collection.Name,
 			},
 			TokenID: *owner.TokenID.ToMathBig(),
 			TransactionIdentifier: apimodel.TransactionIdentifier{

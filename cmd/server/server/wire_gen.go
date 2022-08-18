@@ -103,11 +103,16 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Ctx:     context,
 		Session: db,
 	}
+	nftCollectionQuery := &query.NFTCollectionQuery{
+		Ctx:     context,
+		Session: db,
+	}
 	listOwnerNFTAPIHandler := &handler.ListOwnerNFTAPIHandler{
-		JSON:          jsonResponseWriter,
-		Logger:        listOwnerNFTHandlerLogger,
-		Config:        config,
-		NFTOwnerQuery: nftOwnerQuery,
+		JSON:               jsonResponseWriter,
+		Logger:             listOwnerNFTHandlerLogger,
+		Config:             config,
+		NFTOwnerQuery:      nftOwnerQuery,
+		NFTCollectionQuery: nftCollectionQuery,
 	}
 	return listOwnerNFTAPIHandler
 }
