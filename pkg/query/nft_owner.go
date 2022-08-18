@@ -24,9 +24,9 @@ func (b NFTOwnerQueryBuilder) WithBlockchainNetwork(blockchainNetwork model.Bloc
 	}
 }
 
-func (b NFTOwnerQueryBuilder) WithContractAddress(contractAddress string) NFTOwnerQueryBuilder {
+func (b NFTOwnerQueryBuilder) WithContractAddresses(contractAddresses []string) NFTOwnerQueryBuilder {
 	return NFTOwnerQueryBuilder{
-		b.Where("contract_address = ?", contractAddress),
+		b.Where("contract_address IN (?)", bun.In(contractAddresses)),
 	}
 }
 

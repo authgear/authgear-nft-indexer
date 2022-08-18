@@ -2,9 +2,11 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
+	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	urlutil "github.com/authgear/authgear-nft-indexer/pkg/util/url"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
@@ -41,16 +43,41 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		return
 	}
 
-	limit, offset, err := urlutil.ParsePaginationParams(req.URL.Query(), 10, 0)
+	urlValues := req.URL.Query()
+
+	limit, offset, err := urlutil.ParsePaginationParams(urlValues, 10, 0)
 	if err != nil {
 		h.Logger.Error("invalid pagination")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 
+	contractAddresses := make([]string, 0)
+	contractAddressesStr := urlValues.Get("contract_addresses")
+	for _, contractAddress := range strings.Split(contractAddressesStr, ",") {
+		if contractAddress != "" {
+			contractAddresses = append(contractAddresses, contractAddress)
+		}
+
+	}
+
+	blockchain := urlValues.Get("blockchain")
+	network := urlValues.Get("network")
+
 	qb := h.NFTOwnerQuery.NewQueryBuilder()
 
 	qb = qb.WithOwnerAddress(ownerAddress)
+
+	if blockchain != "" && network != "" {
+		qb = qb.WithBlockchainNetwork(model.BlockchainNetwork{
+			Blockchain: blockchain,
+			Network:    network,
+		})
+	}
+
+	if len(contractAddresses) > 0 {
+		qb = qb.WithContractAddresses(contractAddresses)
+	}
 
 	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb, limit, offset)
 
