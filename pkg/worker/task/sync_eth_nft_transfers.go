@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
@@ -70,6 +71,11 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 		tokenID := hexstring.MustParse(transfer.TokenID)
 		blockNum := hexstring.MustParse(transfer.BlockNum)
 
+		blockTime, err := time.Parse(time.RFC3339, transfer.Metadata.BlockTimestamp)
+		if err != nil {
+			panic(fmt.Errorf("SyncNFTTranfers: failed to parse block time: %w", err))
+		}
+
 		nftTransfers = append(nftTransfers, ethmodel.NFTTransfer{
 			Blockchain:      castedArgs.Blockchain,
 			Network:         castedArgs.Network,
@@ -79,6 +85,7 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 			FromAddress:     transfer.From,
 			ToAddress:       transfer.To,
 			TransactionHash: transfer.Hash,
+			BlockTimestamp:  blockTime,
 		})
 	}
 

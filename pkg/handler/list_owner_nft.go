@@ -105,7 +105,8 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 				Hash: owner.TransactionHash,
 			},
 			BlockIdentifier: apimodel.BlockIdentifier{
-				Index: *owner.BlockNumber.ToMathBig(),
+				Index:     *owner.BlockNumber.ToMathBig(),
+				Timestamp: owner.BlockTimestamp,
 			},
 		})
 	}

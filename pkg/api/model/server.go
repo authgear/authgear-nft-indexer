@@ -43,7 +43,8 @@ type TransactionIdentifier struct {
 }
 
 type BlockIdentifier struct {
-	Index big.Int `json:"index"`
+	Index     big.Int   `json:"index"`
+	Timestamp time.Time `json:"timestamp"`
 }
 type NFTOwner struct {
 	AccountIdentifier     AccountIdentifier     `json:"account_identifier"`
@@ -52,7 +53,6 @@ type NFTOwner struct {
 	TokenID               big.Int               `json:"token_id"`
 	TransactionIdentifier TransactionIdentifier `json:"transaction_identifier"`
 	BlockIdentifier       BlockIdentifier       `json:"block_identifier"`
-	Timestamp             time.Time             `json:"timestamp"`
 }
 
 type CollectionOwnersResponse struct {
