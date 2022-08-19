@@ -14,10 +14,8 @@ type NFTCollection struct {
 }
 
 type WatchCollectionRequestData struct {
-	Blockchain      string `json:"blockchain"`
-	Network         string `json:"network"`
-	Name            string `json:"name,omitempty"`
-	ContractAddress string `json:"contract_address"`
+	ContractID string `json:"contract_id"`
+	Name       string `json:"name,omitempty"`
 }
 
 type CollectionListResponse struct {

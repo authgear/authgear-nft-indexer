@@ -28,11 +28,11 @@ func NewWatchCollectionHandlerLogger(lf *log.Factory) WatchCollectionHandlerLogg
 }
 
 type WatchCollectionHandlerAlchemyAPI interface {
-	GetContractMetadata(blockchainNetwork model.BlockchainNetwork, contractAddress string) (*apimodel.ContractMetadataResponse, error)
+	GetContractMetadata(blockchain string, network string, contractAddress string) (*apimodel.ContractMetadataResponse, error)
 }
 
 type WatchCollectionHandlerNFTCollectionMutator interface {
-	InsertNFTCollection(blockchainNetwork model.BlockchainNetwork, name string, contractAddress string) (*ethmodel.NFTCollection, error)
+	InsertNFTCollection(blockchain string, network string, name string, contractAddress string) (*ethmodel.NFTCollection, error)
 }
 
 type WatchCollectionAPIHandler struct {
@@ -54,14 +54,22 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		return
 	}
 
-	blockchainNetwork := model.BlockchainNetwork{
-		Blockchain: body.Blockchain,
-		Network:    body.Network,
+	if body.ContractID == "" {
+		h.Logger.Error("missing contract_id")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		return
+	}
+
+	contractID, err := model.ParseContractID(body.ContractID)
+	if err != nil {
+		h.Logger.WithError(err).Error("invalid contract_id")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		return
 	}
 
 	contractName := body.Name
 	if contractName == "" {
-		contractMetadata, err := h.AlchemyAPI.GetContractMetadata(blockchainNetwork, body.ContractAddress)
+		contractMetadata, err := h.AlchemyAPI.GetContractMetadata(contractID.Blockchain, contractID.Network, contractID.ContractAddress)
 		if err != nil {
 			h.Logger.WithError(err).Error("Failed to get contract metadata")
 			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
@@ -71,7 +79,7 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		contractName = contractMetadata.ContractMetadata.Name
 	}
 
-	collection, err := h.NFTCollectionMutator.InsertNFTCollection(blockchainNetwork, contractName, body.ContractAddress)
+	collection, err := h.NFTCollectionMutator.InsertNFTCollection(contractID.Blockchain, contractID.Network, contractName, contractID.ContractAddress)
 	if err != nil {
 		h.Logger.WithError(err).Error("Failed to insert nft collection")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})

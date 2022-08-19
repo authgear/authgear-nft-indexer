@@ -18,15 +18,20 @@ type NFTOwnerQueryBuilder struct {
 	*bun.SelectQuery
 }
 
-func (b NFTOwnerQueryBuilder) WithBlockchainNetwork(blockchainNetwork model.BlockchainNetwork) NFTOwnerQueryBuilder {
-	return NFTOwnerQueryBuilder{
-		b.Where("blockchain = ? AND network = ?", blockchainNetwork.Blockchain, blockchainNetwork.Network),
-	}
-}
+func (b NFTOwnerQueryBuilder) WithContracts(contracts []model.ContractID) NFTOwnerQueryBuilder {
 
-func (b NFTOwnerQueryBuilder) WithContractAddresses(contractAddresses []string) NFTOwnerQueryBuilder {
+	blockchains := make([]string, len(contracts))
+	networks := make([]string, len(contracts))
+	contractAddresses := make([]string, len(contracts))
+
+	for _, contract := range contracts {
+		blockchains = append(blockchains, contract.Blockchain)
+		networks = append(networks, contract.Network)
+		contractAddresses = append(contractAddresses, contract.ContractAddress)
+	}
+
 	return NFTOwnerQueryBuilder{
-		b.Where("contract_address IN (?)", bun.In(contractAddresses)),
+		b.Where("blockchain IN (?) AND network IN (?) AND contract_address IN (?)", bun.In(blockchains), bun.In(networks), bun.In(contractAddresses)),
 	}
 }
 
@@ -42,7 +47,7 @@ func (q *NFTOwnerQuery) NewQueryBuilder() NFTOwnerQueryBuilder {
 	}
 }
 
-func (q *NFTOwnerQuery) ExecuteQuery(qb NFTOwnerQueryBuilder, limit int, offset int) (model.Paginated[ethmodel.NFTOwner], error) {
+func (q *NFTOwnerQuery) ExecuteQuery(qb NFTOwnerQueryBuilder) (model.Paginated[ethmodel.NFTOwner], error) {
 	nftOwners := make([]eth.NFTOwner, 0)
 
 	query := qb.Order("token_id ASC")
@@ -56,7 +61,7 @@ func (q *NFTOwnerQuery) ExecuteQuery(qb NFTOwnerQueryBuilder, limit int, offset 
 		}, err
 	}
 
-	err = query.Limit(limit).Offset(offset).Scan(q.Ctx, &nftOwners)
+	err = query.Scan(q.Ctx, &nftOwners)
 	if err != nil {
 		return model.Paginated[eth.NFTOwner]{
 			Items:      []ethmodel.NFTOwner{},

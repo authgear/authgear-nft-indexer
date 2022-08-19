@@ -2,25 +2,17 @@ package handler
 
 import (
 	"net/http"
-	"strings"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
-	urlutil "github.com/authgear/authgear-nft-indexer/pkg/util/url"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 )
-
-type CollectionIdentifier struct {
-	Blockchain      string
-	Network         string
-	ContractAddress string
-}
 
 func ConfigureListOwnerNFTRoute(route httproute.Route) httproute.Route {
 	return route.
@@ -48,32 +40,19 @@ type ListOwnerNFTAPIHandler struct {
 func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	urlValues := req.URL.Query()
 
-	limit, offset, err := urlutil.ParsePaginationParams(urlValues, 10, 0)
-	if err != nil {
-		h.Logger.Error("invalid pagination")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
-		return
-	}
-
-	contractAddresses := make([]string, 0)
-	contractAddressesStr := urlValues.Get("contract_addresses")
-	for _, contractAddress := range strings.Split(contractAddressesStr, ",") {
-		if contractAddress != "" {
-			contractAddresses = append(contractAddresses, contractAddress)
+	contracts := make([]model.ContractID, 0)
+	for _, url := range urlValues["contract_id"] {
+		e, err := model.ParseContractID(url)
+		if e != nil || err != nil {
+			h.Logger.WithError(err).Error("Failed to parse contract URL")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+			return
 		}
 
+		contracts = append(contracts, *e)
 	}
 
-	ownerAddresses := make([]string, 0)
-	ownerAddressesStr := urlValues.Get("owner_addresses")
-	for _, ownerAddress := range strings.Split(ownerAddressesStr, ",") {
-		if ownerAddress != "" {
-			ownerAddresses = append(ownerAddresses, ownerAddress)
-		}
-	}
-
-	blockchain := urlValues.Get("blockchain")
-	network := urlValues.Get("network")
+	ownerAddresses := urlValues["owner_address"]
 
 	collections, err := h.NFTCollectionQuery.QueryNFTCollections()
 	if err != nil {
@@ -82,9 +61,9 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		return
 	}
 
-	collectionMap := make(map[CollectionIdentifier]ethmodel.NFTCollection)
+	collectionMap := make(map[model.ContractID]ethmodel.NFTCollection)
 	for _, collection := range collections {
-		collectionMap[CollectionIdentifier{
+		collectionMap[model.ContractID{
 			Blockchain:      collection.Blockchain,
 			Network:         collection.Network,
 			ContractAddress: collection.ContractAddress,
@@ -94,22 +73,15 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	// Start building query
 	qb := h.NFTOwnerQuery.NewQueryBuilder()
 
-	if blockchain != "" && network != "" {
-		qb = qb.WithBlockchainNetwork(model.BlockchainNetwork{
-			Blockchain: blockchain,
-			Network:    network,
-		})
-	}
-
-	if len(contractAddresses) > 0 {
-		qb = qb.WithContractAddresses(contractAddresses)
+	if len(contracts) > 0 {
+		qb = qb.WithContracts(contracts)
 	}
 
 	if len(ownerAddresses) > 0 {
 		qb = qb.WithOwnerAddresses(ownerAddresses)
 	}
 
-	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb, limit, offset)
+	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb)
 
 	if err != nil {
 		h.Logger.Error("failed to list nft owners")
@@ -119,7 +91,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 
 	nftOwners := make([]apimodel.NFTOwner, 0, len(owners.Items))
 	for _, owner := range owners.Items {
-		collection := collectionMap[CollectionIdentifier{
+		collection := collectionMap[model.ContractID{
 			Blockchain:      owner.Blockchain,
 			Network:         owner.Network,
 			ContractAddress: owner.ContractAddress,
