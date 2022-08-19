@@ -8,7 +8,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
-	"github.com/authgear/authgear-nft-indexer/pkg/util/hexstring"
+	"github.com/authgear/authgear-server/pkg/util/hexstring"
 	"github.com/jrallison/go-workers"
 )
 

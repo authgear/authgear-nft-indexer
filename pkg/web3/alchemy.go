@@ -13,7 +13,7 @@ import (
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
-	"github.com/authgear/authgear-nft-indexer/pkg/util/hexstring"
+	"github.com/authgear/authgear-server/pkg/util/hexstring"
 )
 
 type AlchemyAPI struct {
