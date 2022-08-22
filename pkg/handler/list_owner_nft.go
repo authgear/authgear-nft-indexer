@@ -43,9 +43,9 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	contracts := make([]model.ContractID, 0)
 	for _, url := range urlValues["contract_id"] {
 		e, err := model.ParseContractID(url)
-		if e != nil || err != nil {
-			h.Logger.WithError(err).Error("Failed to parse contract URL")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		if err != nil {
+			h.Logger.WithError(err).Error("failed to parse contract URL")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract URL")})
 			return
 		}
 
@@ -57,7 +57,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	collections, err := h.NFTCollectionQuery.QueryNFTCollections()
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to query nft collections")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to query nft collections")})
 		return
 	}
 
@@ -84,8 +84,8 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb)
 
 	if err != nil {
-		h.Logger.Error("failed to list nft owners")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to list nft owners")})
+		h.Logger.WithError(err).Error("failed to list nft owners")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to list nft owners")})
 		return
 	}
 

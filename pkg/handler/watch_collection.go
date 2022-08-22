@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
@@ -10,6 +9,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
+	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	"github.com/jrallison/go-workers"
@@ -49,21 +49,21 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 	defer req.Body.Close()
 	err := json.NewDecoder(req.Body).Decode(&body)
 	if err != nil {
-		h.Logger.WithError(err).Error("Failed to decode request body")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		h.Logger.WithError(err).Error("failed to decode request body")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to decode request body")})
 		return
 	}
 
 	if body.ContractID == "" {
 		h.Logger.Error("missing contract_id")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract_id")})
 		return
 	}
 
 	contractID, err := model.ParseContractID(body.ContractID)
 	if err != nil {
 		h.Logger.WithError(err).Error("invalid contract_id")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract_id")})
 		return
 	}
 
@@ -71,8 +71,8 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 	if contractName == "" {
 		contractMetadata, err := h.AlchemyAPI.GetContractMetadata(contractID.Blockchain, contractID.Network, contractID.ContractAddress)
 		if err != nil {
-			h.Logger.WithError(err).Error("Failed to get contract metadata")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+			h.Logger.WithError(err).Error("failed to get contract metadata")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get contract metadata")})
 			return
 		}
 
@@ -81,14 +81,14 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 
 	collection, err := h.NFTCollectionMutator.InsertNFTCollection(contractID.Blockchain, contractID.Network, contractName, contractID.ContractAddress)
 	if err != nil {
-		h.Logger.WithError(err).Error("Failed to insert nft collection")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
+		h.Logger.WithError(err).Error("failed to insert nft collection")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to insert nft collection")})
 		return
 	}
 
 	_, err = workers.Enqueue(h.Config.Worker.CollectionQueueName, "", nil)
 	if err != nil {
-		fmt.Printf("failed to enqueue collection: %+v", err)
+		h.Logger.WithError(err).Error("failed to enqueue collection")
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
