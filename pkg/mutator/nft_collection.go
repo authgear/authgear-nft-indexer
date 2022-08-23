@@ -24,12 +24,12 @@ func (q *NFTCollectionMutator) InsertNFTCollection(blockchain string, network st
 	}
 
 	err := q.Session.RunInTx(q.Ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// Query record ID if exists
+		// Query record ID if exists, if not, generate new id and insert
 		tx.NewSelect().
 			Model(collection).
 			Where("blockchain = ? AND network = ? AND contract_address = ?", collection.Blockchain, collection.Network, collection.ContractAddress).
 			Limit(1).
-			Scan(ctx)
+			Scan(ctx) //nolint:errcheck
 
 		_, err := tx.NewInsert().
 			Model(collection).
