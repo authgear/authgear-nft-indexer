@@ -13,15 +13,9 @@ type NFTCollection struct {
 	ContractAddress string `json:"contract_address"`
 }
 
-type CollectionRegistrationRequestData struct {
-	Blockchain      string `json:"blockchain"`
-	Network         string `json:"network"`
-	Name            string `json:"name,omitempty"`
-	ContractAddress string `json:"contract_address"`
-}
-
-type CollectionDeregistrationRequestData struct {
-	ID string `json:"id"`
+type WatchCollectionRequestData struct {
+	ContractID string `json:"contract_id"`
+	Name       string `json:"name,omitempty"`
 }
 
 type CollectionListResponse struct {
@@ -47,7 +41,8 @@ type TransactionIdentifier struct {
 }
 
 type BlockIdentifier struct {
-	Index big.Int `json:"index"`
+	Index     big.Int   `json:"index"`
+	Timestamp time.Time `json:"timestamp"`
 }
 type NFTOwner struct {
 	AccountIdentifier     AccountIdentifier     `json:"account_identifier"`
@@ -56,7 +51,6 @@ type NFTOwner struct {
 	TokenID               big.Int               `json:"token_id"`
 	TransactionIdentifier TransactionIdentifier `json:"transaction_identifier"`
 	BlockIdentifier       BlockIdentifier       `json:"block_identifier"`
-	Timestamp             time.Time             `json:"timestamp"`
 }
 
 type CollectionOwnersResponse struct {

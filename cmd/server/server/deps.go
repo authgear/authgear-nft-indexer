@@ -12,13 +12,13 @@ import (
 var DependencySet = wire.NewSet(
 	query.DependencySet,
 	wire.Bind(new(handler.ListCollectionHandlerCollectionsQuery), new(*query.NFTCollectionQuery)),
+	wire.Bind(new(handler.ListOwnerNFTHandlerNFTCollectionQuery), new(*query.NFTCollectionQuery)),
 
 	mutator.DependencySet,
-	wire.Bind(new(handler.DeregisterCollectionHandlerNFTCollectionMutator), new(*mutator.NFTCollectionMutator)),
-	wire.Bind(new(handler.RegisterCollectionHandlerNFTCollectionMutator), new(*mutator.NFTCollectionMutator)),
+	wire.Bind(new(handler.WatchCollectionHandlerNFTCollectionMutator), new(*mutator.NFTCollectionMutator)),
 
 	web3.DependencySet,
-	wire.Bind(new(handler.RegisterCollectionHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
+	wire.Bind(new(handler.WatchCollectionHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
 
 	handler.DependencySet,
 	httputil.DependencySet,

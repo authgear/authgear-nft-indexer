@@ -3,12 +3,12 @@ package task
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
-	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
-	"github.com/authgear/authgear-nft-indexer/pkg/util/hexstring"
+	"github.com/authgear/authgear-server/pkg/util/hexstring"
 	"github.com/jrallison/go-workers"
 	"github.com/uptrace/bun/extra/bunbig"
 )
@@ -20,7 +20,7 @@ type SycnNFTTransferTransferMutator interface {
 }
 
 type SycnNFTTransferAlchemyAPI interface {
-	GetNFTTransfers(blockchainNetwork model.BlockchainNetwork, contractAddresses []string, fromBlock string, toBlock string, pageKey string, maxCount int64) (*apimodel.AssetTransferResponse, error)
+	GetNFTTransfers(blockchain string, network string, contractAddresses []string, fromBlock string, toBlock string, pageKey string, maxCount int64) (*apimodel.AssetTransferResponse, error)
 }
 
 type SyncETHNFTTransfersMessageArgs struct {
@@ -54,12 +54,7 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 		panic(fmt.Errorf("SyncNFTTranfers: failed to unmarshal args: %w", err))
 	}
 
-	blockchainNetwork := model.BlockchainNetwork{
-		Blockchain: castedArgs.Blockchain,
-		Network:    castedArgs.Network,
-	}
-
-	res, err := h.AlchemyAPI.GetNFTTransfers(blockchainNetwork, castedArgs.ContractAddresses, castedArgs.FromBlock, "latest", castedArgs.PageKey, TransferPageSize)
+	res, err := h.AlchemyAPI.GetNFTTransfers(castedArgs.Blockchain, castedArgs.Network, castedArgs.ContractAddresses, castedArgs.FromBlock, "latest", castedArgs.PageKey, TransferPageSize)
 	if err != nil {
 		panic(fmt.Errorf("SyncNFTTranfers: failed to get NFT transfers: %w", err))
 	}
@@ -70,6 +65,11 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 		tokenID := hexstring.MustParse(transfer.TokenID)
 		blockNum := hexstring.MustParse(transfer.BlockNum)
 
+		blockTime, err := time.Parse(time.RFC3339, transfer.Metadata.BlockTimestamp)
+		if err != nil {
+			panic(fmt.Errorf("SyncNFTTranfers: failed to parse block time: %w", err))
+		}
+
 		nftTransfers = append(nftTransfers, ethmodel.NFTTransfer{
 			Blockchain:      castedArgs.Blockchain,
 			Network:         castedArgs.Network,
@@ -79,6 +79,7 @@ func (h *SyncETHNFTTransferTaskHandler) Handler(message *workers.Msg) {
 			FromAddress:     transfer.From,
 			ToAddress:       transfer.To,
 			TransactionHash: transfer.Hash,
+			BlockTimestamp:  blockTime,
 		})
 	}
 

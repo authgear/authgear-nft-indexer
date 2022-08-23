@@ -40,6 +40,7 @@ CREATE TABLE eth_nft_owner
 	block_number bigint NOT NULL,
 	owner_address text NOT NULL,
 	txn_hash text NOT NULL,
+	block_timestamp timestamp without time zone NOT NULL,
 	created_at    timestamp without time zone NOT NULL,
 	updated_at    timestamp without time zone NOT NULL
 );
@@ -52,8 +53,8 @@ CREATE OR REPLACE FUNCTION eth_update_nft_owner() RETURNS TRIGGER AS $$
 	BEGIN
 		IF (TG_OP = 'INSERT') THEN
 			-- Insert all new record to the db
-			INSERT INTO eth_nft_owner (blockchain, network, contract_address, token_id, block_number, owner_address, txn_hash, created_at, updated_at)
-			VALUES (NEW.blockchain, NEW.network, NEW.contract_address, NEW.token_id, NEW.block_number, NEW.to_address, NEW.txn_hash, NOW(), NOW())
+			INSERT INTO eth_nft_owner (blockchain, network, contract_address, token_id, block_number, owner_address, txn_hash, block_timestamp, created_at, updated_at)
+			VALUES (NEW.blockchain, NEW.network, NEW.contract_address, NEW.token_id, NEW.block_number, NEW.to_address, NEW.txn_hash, NEW.block_timestamp, NOW(), NOW())
 			ON CONFLICT (blockchain, network, contract_address, token_id) DO NOTHING;
 
 			-- Update owners

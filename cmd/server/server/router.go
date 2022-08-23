@@ -18,10 +18,8 @@ func NewRouter(config config.Config, session *bun.DB, lf *log.Factory) *httprout
 	}
 	route := httproute.Route{}
 	router.Add(handler.ConfigureHealthCheckRoute(route), routeHandler.Handle(NewHealthCheckAPIHandler))
-	router.Add(handler.ConfigureRegisterCollectionRoute(route), routeHandler.Handle(NewRegisterCollectionAPIHandler))
-	router.Add(handler.ConfigureDeregisterCollectionRoute(route), routeHandler.Handle(NewDeregisterCollectionAPIHandler))
+	router.Add(handler.ConfigureWatchCollectionRoute(route), routeHandler.Handle(NewWatchCollectionAPIHandler))
 	router.Add(handler.ConfigureListCollectionRoute(route), routeHandler.Handle(NewListCollectionAPIHandler))
-	router.Add(handler.ConfigureListCollectionOwnerRoute(route), routeHandler.Handle(NewListCollectionOwnerAPIHandler))
 	router.Add(handler.ConfigureListOwnerNFTRoute(route), routeHandler.Handle(NewListOwnerNFTAPIHandler))
 
 	return router

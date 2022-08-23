@@ -25,7 +25,7 @@ func NewHealthCheckHandlerLogger(lf *log.Factory) HealthCheckHandlerLogger {
 
 type HealthCheckAPIHandler struct {
 	JSON     JSONResponseWriter
-	Logger   RegisterCollectionHandlerLogger
+	Logger   HealthCheckHandlerLogger
 	Config   config.Config
 	Database *bun.DB
 	Context  context.Context
