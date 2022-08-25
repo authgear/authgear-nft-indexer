@@ -27,7 +27,7 @@ func NewListOwnerNFTHandlerLogger(lf *log.Factory) ListOwnerNFTHandlerLogger {
 }
 
 type ListOwnerNFTHandlerNFTCollectionQuery interface {
-	QueryNFTCollections() ([]ethmodel.NFTCollection, error)
+	QueryAllNFTCollections() ([]ethmodel.NFTCollection, error)
 }
 type ListOwnerNFTAPIHandler struct {
 	JSON               JSONResponseWriter
@@ -54,7 +54,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 
 	ownerAddresses := urlValues["owner_address"]
 
-	collections, err := h.NFTCollectionQuery.QueryNFTCollections()
+	collections, err := h.NFTCollectionQuery.QueryAllNFTCollections()
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to query nft collections")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to query nft collections")})

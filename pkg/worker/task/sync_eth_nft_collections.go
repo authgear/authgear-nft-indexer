@@ -12,7 +12,7 @@ import (
 )
 
 type SycnNFTCollectionTaskCollectionQuery interface {
-	QueryNFTCollections() ([]ethmodel.NFTCollection, error)
+	QueryAllNFTCollections() ([]ethmodel.NFTCollection, error)
 }
 
 type SyncETHNFTCollectionTaskHandler struct {
@@ -26,7 +26,7 @@ type BlockchainNetwork struct {
 }
 
 func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
-	collections, err := h.NftCollectionQuery.QueryNFTCollections()
+	collections, err := h.NftCollectionQuery.QueryAllNFTCollections()
 	if err != nil {
 		panic(fmt.Errorf("SyncNFTCollections: failed to query NFT collections: %w", err))
 	}

@@ -3,8 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/authgear/authgear-nft-indexer/pkg/api/model"
-	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
+	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
+	"github.com/authgear/authgear-nft-indexer/pkg/model"
+	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
@@ -23,26 +24,43 @@ func NewListCollectionHandlerLogger(lf *log.Factory) ListCollectionHandlerLogger
 	return ListCollectionHandlerLogger{lf.New("api-list-collection")}
 }
 
-type ListCollectionHandlerCollectionsQuery interface {
-	QueryNFTCollections() ([]eth.NFTCollection, error)
-}
 type ListCollectionAPIHandler struct {
 	JSON               JSONResponseWriter
 	Logger             ListCollectionHandlerLogger
-	NFTCollectionQuery ListCollectionHandlerCollectionsQuery
+	NFTCollectionQuery query.NFTCollectionQuery
 }
 
 func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	collections, err := h.NFTCollectionQuery.QueryNFTCollections()
+	urlValues := req.URL.Query()
+
+	contracts := make([]model.ContractID, 0)
+	for _, url := range urlValues["contract_id"] {
+		e, err := model.ParseContractID(url)
+		if err != nil {
+			h.Logger.WithError(err).Error("failed to parse contract URL")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract URL")})
+			return
+		}
+
+		contracts = append(contracts, *e)
+	}
+
+	qb := h.NFTCollectionQuery.NewQueryBuilder()
+
+	if len(contracts) > 0 {
+		qb = qb.WithContracts(contracts)
+	}
+
+	collections, err := h.NFTCollectionQuery.ExecuteQuery(qb)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to list nft collections")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to list nft collections")})
 		return
 	}
 
-	nftCollections := make([]model.NFTCollection, 0, len(collections))
+	nftCollections := make([]apimodel.NFTCollection, 0, len(collections))
 	for _, collection := range collections {
-		nftCollections = append(nftCollections, model.NFTCollection{
+		nftCollections = append(nftCollections, apimodel.NFTCollection{
 			ID:              collection.ID,
 			Blockchain:      collection.Blockchain,
 			Network:         collection.Network,
@@ -54,7 +72,7 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
-		Result: &model.CollectionListResponse{
+		Result: &apimodel.CollectionListResponse{
 			Items: nftCollections,
 		},
 	})

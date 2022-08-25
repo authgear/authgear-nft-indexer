@@ -76,7 +76,7 @@ func NewListCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 	request := p.Request
 	context := handler.ProvideRequestContext(request)
 	db := p.Database
-	nftCollectionQuery := &query.NFTCollectionQuery{
+	nftCollectionQuery := query.NFTCollectionQuery{
 		Ctx:     context,
 		Session: db,
 	}
