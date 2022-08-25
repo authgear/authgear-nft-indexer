@@ -26,4 +26,6 @@ var DependencySet = wire.NewSet(
 	NewListCollectionHandlerLogger,
 	wire.Struct(new(ListOwnerNFTAPIHandler), "*"),
 	NewListOwnerNFTHandlerLogger,
+	wire.Struct(new(GetCollectionAPIHandler), "*"),
+	NewGetCollectionHandlerLogger,
 )

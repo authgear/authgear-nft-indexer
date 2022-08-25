@@ -116,3 +116,25 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 	}
 	return listOwnerNFTAPIHandler
 }
+
+func NewGetCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
+	factory := p.LogFactory
+	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
+	jsonResponseWriter := &httputil.JSONResponseWriter{
+		Logger: jsonResponseWriterLogger,
+	}
+	listCollectionHandlerLogger := handler.NewListCollectionHandlerLogger(factory)
+	request := p.Request
+	context := handler.ProvideRequestContext(request)
+	db := p.Database
+	nftCollectionQuery := query.NFTCollectionQuery{
+		Ctx:     context,
+		Session: db,
+	}
+	getCollectionAPIHandler := &handler.GetCollectionAPIHandler{
+		JSON:               jsonResponseWriter,
+		Logger:             listCollectionHandlerLogger,
+		NFTCollectionQuery: nftCollectionQuery,
+	}
+	return getCollectionAPIHandler
+}
