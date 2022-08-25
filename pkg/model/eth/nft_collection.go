@@ -34,7 +34,7 @@ type NFTCollection struct {
 	Network         string            `bun:"network,notnull"`
 	ContractAddress string            `bun:"contract_address,notnull"`
 	Name            string            `bun:"name,notnull"`
-	FromBlockHeight bunbig.Int        `bun:"from_block_height,notnull"`
-	TotalSupply     bunbig.Int        `bun:"total_supply,notnull"`
+	FromBlockHeight *bunbig.Int       `bun:"from_block_height,notnull"`
+	TotalSupply     *bunbig.Int       `bun:"total_supply,notnull"`
 	Type            NFTCollectionType `bun:"type,notnull"`
 }

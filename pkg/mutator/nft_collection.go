@@ -21,8 +21,8 @@ func (q *NFTCollectionMutator) InsertNFTCollection(blockchain string, network st
 		Network:         network,
 		ContractAddress: contractAddress,
 		Name:            contractName,
-		FromBlockHeight: *bunbig.FromInt64(0),
-		TotalSupply:     *bunbig.FromMathBig(totalSupply),
+		FromBlockHeight: bunbig.FromInt64(0),
+		TotalSupply:     bunbig.FromMathBig(totalSupply),
 		Type:            tokenType,
 	}
 

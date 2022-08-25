@@ -42,6 +42,7 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 			Blockchain: collection.Blockchain,
 			Network:    collection.Network,
 		}
+
 		nftContractAddressesByNetwork[blockchainNetwork] = append(nftContractAddressesByNetwork[blockchainNetwork], collection.ContractAddress)
 
 		if smallestBlockByNetwork[blockchainNetwork] == nil || smallestBlockByNetwork[blockchainNetwork].Cmp(collection.FromBlockHeight.ToMathBig()) > 0 {
