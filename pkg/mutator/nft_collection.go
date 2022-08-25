@@ -3,6 +3,7 @@ package mutator
 import (
 	"context"
 	"database/sql"
+	"math/big"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	"github.com/uptrace/bun"
@@ -14,13 +15,15 @@ type NFTCollectionMutator struct {
 	Session *bun.DB
 }
 
-func (q *NFTCollectionMutator) InsertNFTCollection(blockchain string, network string, contractName string, contractAddress string) (*eth.NFTCollection, error) {
+func (q *NFTCollectionMutator) InsertNFTCollection(blockchain string, network string, contractName string, contractAddress string, tokenType eth.NFTCollectionType, totalSupply *big.Int) (*eth.NFTCollection, error) {
 	collection := &eth.NFTCollection{
 		Blockchain:      blockchain,
 		Network:         network,
 		ContractAddress: contractAddress,
 		Name:            contractName,
 		FromBlockHeight: *bunbig.FromInt64(0),
+		TotalSupply:     *bunbig.FromMathBig(totalSupply),
+		Type:            tokenType,
 	}
 
 	err := q.Session.RunInTx(q.Ctx, nil, func(ctx context.Context, tx bun.Tx) error {

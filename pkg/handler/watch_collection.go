@@ -2,11 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"math/big"
 	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
+	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
@@ -32,7 +34,7 @@ type WatchCollectionHandlerAlchemyAPI interface {
 }
 
 type WatchCollectionHandlerNFTCollectionMutator interface {
-	InsertNFTCollection(blockchain string, network string, name string, contractAddress string) (*ethmodel.NFTCollection, error)
+	InsertNFTCollection(blockchain string, network string, name string, contractAddress string, tokenType eth.NFTCollectionType, totalSupply *big.Int) (*ethmodel.NFTCollection, error)
 }
 
 type WatchCollectionAPIHandler struct {
@@ -67,19 +69,41 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		return
 	}
 
+	contractMetadata, err := h.AlchemyAPI.GetContractMetadata(contractID.Blockchain, contractID.Network, contractID.ContractAddress)
+	if err != nil {
+		h.Logger.WithError(err).Error("failed to get contract metadata")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get contract metadata")})
+		return
+	}
+
 	contractName := body.Name
 	if contractName == "" {
-		contractMetadata, err := h.AlchemyAPI.GetContractMetadata(contractID.Blockchain, contractID.Network, contractID.ContractAddress)
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to get contract metadata")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get contract metadata")})
-			return
-		}
-
 		contractName = contractMetadata.ContractMetadata.Name
 	}
 
-	collection, err := h.NFTCollectionMutator.InsertNFTCollection(contractID.Blockchain, contractID.Network, contractName, contractID.ContractAddress)
+	tokenType, err := eth.ParseNFTCollectionType(contractMetadata.ContractMetadata.TokenType)
+	if err != nil {
+		h.Logger.WithError(err).Error("failed to parse token type")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to parse token type")})
+		return
+	}
+
+	totalSupply := new(big.Int)
+	totalSupply, ok := totalSupply.SetString(contractMetadata.ContractMetadata.TotalSupply, 10)
+	if !ok {
+		h.Logger.Error("failed to parse total supply")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to parse total supply")})
+		return
+	}
+
+	collection, err := h.NFTCollectionMutator.InsertNFTCollection(
+		contractID.Blockchain,
+		contractID.Network,
+		contractName,
+		contractID.ContractAddress,
+		tokenType,
+		totalSupply,
+	)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to insert nft collection")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to insert nft collection")})
@@ -98,6 +122,8 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 			Network:         collection.Network,
 			Name:            collection.Name,
 			ContractAddress: collection.ContractAddress,
+			Type:            string(collection.Type),
+			TotalSupply:     *collection.TotalSupply.ToMathBig(),
 		},
 	})
 

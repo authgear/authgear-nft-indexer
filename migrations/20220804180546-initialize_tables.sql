@@ -1,5 +1,6 @@
 -- +migrate Up
 
+CREATE TYPE eth_nft_collection_type AS ENUM ('erc721');
 CREATE TABLE eth_nft_collection
 (
 	id text PRIMARY KEY,
@@ -8,6 +9,8 @@ CREATE TABLE eth_nft_collection
 	blockchain text NOT NULL,
 	network text NOT NULL,
 	from_block_height bigint NOT NULL,
+	total_supply numeric NOT NULL,
+	type eth_nft_collection_type NOT NULL,
 	created_at    timestamp without time zone NOT NULL,
     updated_at    timestamp without time zone NOT NULL
 );
@@ -97,3 +100,4 @@ DROP TABLE eth_nft_transfer;
 DROP INDEX eth_nft_collection_unq_collection_idx;
 DROP TABLE eth_nft_collection;
 DROP FUNCTION eth_update_nft_owner();
+DROP TYPE eth_nft_collection_type;

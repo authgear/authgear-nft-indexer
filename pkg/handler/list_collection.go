@@ -48,6 +48,8 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 			Network:         collection.Network,
 			Name:            collection.Name,
 			ContractAddress: collection.ContractAddress,
+			TotalSupply:     *collection.TotalSupply.ToMathBig(),
+			Type:            string(collection.Type),
 		})
 	}
 
