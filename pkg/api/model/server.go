@@ -46,16 +46,20 @@ type BlockIdentifier struct {
 	Index     big.Int   `json:"index"`
 	Timestamp time.Time `json:"timestamp"`
 }
-type NFTOwner struct {
-	AccountIdentifier     AccountIdentifier     `json:"account_identifier"`
-	NetworkIdentifier     NetworkIdentifier     `json:"network_identifier"`
-	Contract              Contract              `json:"contract"`
+
+type Token struct {
 	TokenID               big.Int               `json:"token_id"`
 	TransactionIdentifier TransactionIdentifier `json:"transaction_identifier"`
 	BlockIdentifier       BlockIdentifier       `json:"block_identifier"`
 }
 
-type CollectionOwnersResponse struct {
-	Items      []NFTOwner `json:"items"`
-	TotalCount int        `json:"total_count"`
+type NFT struct {
+	Contract Contract `json:"contract"`
+	Balance  int      `json:"balance"`
+	Tokens   []Token  `json:"tokens"`
+}
+type NFTOwnership struct {
+	AccountIdentifier AccountIdentifier `json:"account_identifier"`
+	NetworkIdentifier NetworkIdentifier `json:"network_identifier"`
+	NFTs              []NFT             `json:"nfts"`
 }

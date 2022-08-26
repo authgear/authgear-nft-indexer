@@ -35,9 +35,9 @@ func (b NFTOwnerQueryBuilder) WithContracts(contracts []model.ContractID) NFTOwn
 	}
 }
 
-func (b NFTOwnerQueryBuilder) WithOwnerAddresses(ownerAddresses []string) NFTOwnerQueryBuilder {
+func (b NFTOwnerQueryBuilder) WithOwnerAddress(ownerAddress string) NFTOwnerQueryBuilder {
 	return NFTOwnerQueryBuilder{
-		b.Where("owner_address IN (?)", bun.In(ownerAddresses)),
+		b.Where("owner_address = ?", ownerAddress),
 	}
 }
 
@@ -47,30 +47,15 @@ func (q *NFTOwnerQuery) NewQueryBuilder() NFTOwnerQueryBuilder {
 	}
 }
 
-func (q *NFTOwnerQuery) ExecuteQuery(qb NFTOwnerQueryBuilder) (model.Paginated[ethmodel.NFTOwner], error) {
+func (q *NFTOwnerQuery) ExecuteQuery(qb NFTOwnerQueryBuilder) ([]ethmodel.NFTOwner, error) {
 	nftOwners := make([]eth.NFTOwner, 0)
 
 	query := qb.Order("token_id ASC")
 
-	totalCount, err := query.Count(q.Ctx)
-
+	err := query.Scan(q.Ctx, &nftOwners)
 	if err != nil {
-		return model.Paginated[eth.NFTOwner]{
-			Items:      []ethmodel.NFTOwner{},
-			TotalCount: 0,
-		}, err
+		return []ethmodel.NFTOwner{}, err
 	}
 
-	err = query.Scan(q.Ctx, &nftOwners)
-	if err != nil {
-		return model.Paginated[eth.NFTOwner]{
-			Items:      []ethmodel.NFTOwner{},
-			TotalCount: 0,
-		}, err
-	}
-
-	return model.Paginated[eth.NFTOwner]{
-		Items:      nftOwners,
-		TotalCount: totalCount,
-	}, nil
+	return nftOwners, nil
 }
