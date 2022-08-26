@@ -5,6 +5,9 @@ var _ = Schema.Add("AlchemyConfig", `
 	"type": "object",
 	"additionalProperties": false,
 	"properties": {
+		"blockchain": { "type": "string" },
+		"network": { "type": "string" },
+		"endpoint": { "type": "string" },
 		"api_key": { "type": "string" }
 	},
 	"required": ["api_key"]
@@ -12,5 +15,8 @@ var _ = Schema.Add("AlchemyConfig", `
 `)
 
 type AlchemyConfig struct {
-	APIKey string `json:"api_key"`
+	APIKey     string `json:"api_key"`
+	Blockchain string `json:"blockchain"`
+	Network    string `json:"network"`
+	EndPoint   string `json:"endpoint"`
 }
