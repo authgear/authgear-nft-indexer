@@ -7,9 +7,9 @@ import (
 	"github.com/authgear/authgear-server/pkg/util/duration"
 )
 
-func AntiSpamContractMetadataRequestBucket(appID string, ip string) ratelimit.Bucket {
+func AntiSpamContractMetadataRequestBucket() ratelimit.Bucket {
 	return ratelimit.Bucket{
-		Key:         fmt.Sprintf("request:%s-%s", appID, ip),
+		Key:         fmt.Sprintf("contract-metadata-request"),
 		Size:        10,
 		ResetPeriod: duration.PerHour,
 	}

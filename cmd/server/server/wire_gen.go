@@ -138,3 +138,24 @@ func NewGetCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 	}
 	return getCollectionAPIHandler
 }
+
+func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler {
+	factory := p.LogFactory
+	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
+	jsonResponseWriter := &httputil.JSONResponseWriter{
+		Logger: jsonResponseWriterLogger,
+	}
+	getCollectionMetadataHandlerLogger := handler.NewGetCollectionMetadataHandlerLogger(factory)
+	config := p.Config
+	alchemyAPI := &web3.AlchemyAPI{
+		Config: config,
+	}
+	limiter := p.RateLimiter
+	getCollectionMetadataAPIHandler := &handler.GetCollectionMetadataAPIHandler{
+		JSON:        jsonResponseWriter,
+		Logger:      getCollectionMetadataHandlerLogger,
+		AlchemyAPI:  alchemyAPI,
+		RateLimiter: limiter,
+	}
+	return getCollectionMetadataAPIHandler
+}

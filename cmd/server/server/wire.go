@@ -39,3 +39,9 @@ func NewGetCollectionAPIHandler(
 ) http.Handler {
 	panic(wire.Build(DependencySet, wire.Bind(new(http.Handler), new(*handler.GetCollectionAPIHandler))))
 }
+
+func NewGetCollectionMetadataAPIHandler(
+	p *handler.RequestProvider,
+) http.Handler {
+	panic(wire.Build(DependencySet, wire.Bind(new(http.Handler), new(*handler.GetCollectionMetadataAPIHandler))))
+}
