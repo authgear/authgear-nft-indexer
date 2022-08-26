@@ -3,7 +3,7 @@ linters:
   enable:
     - deadcode
     - gocyclo
-    - golint
+    - revive
     - gosec
     - govet
     - ineffassign
