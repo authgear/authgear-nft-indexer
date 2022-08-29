@@ -38,10 +38,7 @@ func (rh *RouteHandler) Handle(factory func(*RequestProvider) http.Handler) http
 		query := r.URL.Query()
 		appID := query.Get("app_id")
 
-		rl := new(agratelimit.Limiter)
-		if appID != "" {
-			rl = rlf.New(appID)
-		}
+		rl := rlf.New(appID)
 
 		p := &RequestProvider{
 			Config:         rh.Config,
