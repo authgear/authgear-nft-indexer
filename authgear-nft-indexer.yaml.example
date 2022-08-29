@@ -12,7 +12,4 @@ worker:
 server:
   listen_addr: 0.0.0.0:8080
 alchemy:
-  - blockchain: ethereum
-    network: mainnet
-    endpoint: https://eth-mainnet.g.alchemy.com
-    api_key:
+  api_key:
