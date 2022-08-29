@@ -94,11 +94,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	// Start building query
 	qb := h.NFTOwnerQuery.NewQueryBuilder()
 
-	qb = qb.WithOwnerAddress(ownerAddress)
-
-	if len(contracts) > 0 {
-		qb = qb.WithContracts(contracts)
-	}
+	qb = qb.WithOwnerAddress(ownerAddress).WithContracts(contracts)
 
 	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb)
 	if err != nil {

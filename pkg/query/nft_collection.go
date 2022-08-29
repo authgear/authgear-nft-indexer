@@ -18,6 +18,10 @@ type NFTCollectionQueryBuilder struct {
 }
 
 func (b NFTCollectionQueryBuilder) WithContracts(contracts []model.ContractID) NFTCollectionQueryBuilder {
+	if len(contracts) == 0 {
+		return b
+	}
+
 	blockchains := make([]string, len(contracts))
 	networks := make([]string, len(contracts))
 	contractAddresses := make([]string, len(contracts))

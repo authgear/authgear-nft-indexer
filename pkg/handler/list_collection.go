@@ -47,9 +47,7 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 
 	qb := h.NFTCollectionQuery.NewQueryBuilder()
 
-	if len(contracts) > 0 {
-		qb = qb.WithContracts(contracts)
-	}
+	qb = qb.WithContracts(contracts)
 
 	collections, err := h.NFTCollectionQuery.ExecuteQuery(qb)
 	if err != nil {

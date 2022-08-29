@@ -19,6 +19,9 @@ type NFTOwnerQueryBuilder struct {
 }
 
 func (b NFTOwnerQueryBuilder) WithContracts(contracts []model.ContractID) NFTOwnerQueryBuilder {
+	if len(contracts) == 0 {
+		return b
+	}
 
 	blockchains := make([]string, len(contracts))
 	networks := make([]string, len(contracts))
