@@ -2,6 +2,7 @@
 
 ## Prerequisite
 
+0. Docker 20.10.17+
 1. Install asdf
 
 2. Run the following to install all dependencies in .tool-versions
@@ -25,7 +26,7 @@ make setup
 1. Start the db container
 
 ```
-docker-compose up -d db
+docker compose up -d db
 ```
 
 2. Apply database schema migrations:
@@ -46,7 +47,7 @@ go run ./cmd/indexer database migrate new add user table
 ## Run everything
 
 ```
-docker-compose up -d
+docker compose up -d
 ```
 
 Then run the following command to start up the indexer worker
