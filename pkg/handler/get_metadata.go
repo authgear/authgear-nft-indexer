@@ -5,6 +5,7 @@ import (
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
+	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
@@ -65,7 +66,22 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
+	tokenType, err := ethmodel.ParseNFTCollectionType(contractMetadata.ContractMetadata.TokenType)
+	if err != nil {
+		h.Logger.WithError(err).Error("failed to parse token type")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to parse token type")})
+		return
+	}
+
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
-		Result: &contractMetadata,
+		Result: &apimodel.GetContractMetadataResponse{
+			Address: contractMetadata.Address,
+			ContractMetadata: apimodel.GetContractMetadataContractMetadata{
+				Name:        contractMetadata.ContractMetadata.Name,
+				Symbol:      contractMetadata.ContractMetadata.Symbol,
+				TotalSupply: contractMetadata.ContractMetadata.TotalSupply,
+				TokenType:   string(tokenType),
+			},
+		},
 	})
 }
