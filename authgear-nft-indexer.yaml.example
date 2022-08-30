@@ -1,7 +1,10 @@
 redis:
   server: localhost:6379
   database: "0"
-  pool_size: 30
+  max_open_connection: 10
+  max_idle_connection: 2
+  max_conn_lifetime: 900
+  idle_conn_timeout: 300
 database:
   url: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
   pool_size: 10

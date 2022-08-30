@@ -14,7 +14,7 @@ func ConfigureWorkers(config config.RedisConfig) {
 		// instance of the database
 		"database": config.Database,
 		// number of connections to keep open with redis
-		"pool": strconv.Itoa(config.PoolSize),
+		"pool": strconv.Itoa(config.MaxOpenConnection),
 		// unique process id for this instance of workers (for proper recovery of inprogress jobs on crash)
 		"process": "nft-indexer",
 	})

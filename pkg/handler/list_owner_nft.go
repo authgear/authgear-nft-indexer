@@ -17,7 +17,7 @@ import (
 func ConfigureListOwnerNFTRoute(route httproute.Route) httproute.Route {
 	return route.
 		WithMethods("GET").
-		WithPathPattern("/nfts")
+		WithPathPattern("/nfts/:owner_address")
 }
 
 type ListOwnerNFTHandlerLogger struct{ *log.Logger }
@@ -27,7 +27,7 @@ func NewListOwnerNFTHandlerLogger(lf *log.Factory) ListOwnerNFTHandlerLogger {
 }
 
 type ListOwnerNFTHandlerNFTCollectionQuery interface {
-	QueryNFTCollections() ([]ethmodel.NFTCollection, error)
+	QueryAllNFTCollections() ([]ethmodel.NFTCollection, error)
 }
 type ListOwnerNFTAPIHandler struct {
 	JSON               JSONResponseWriter
@@ -52,78 +52,128 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		contracts = append(contracts, *e)
 	}
 
-	ownerAddresses := urlValues["owner_address"]
+	ownerAddress := httproute.GetParam(req, "owner_address")
 
-	collections, err := h.NFTCollectionQuery.QueryNFTCollections()
+	if ownerAddress == "" {
+		h.Logger.Error("invalid owner address")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid owner address")})
+		return
+	}
+
+	collections, err := h.NFTCollectionQuery.QueryAllNFTCollections()
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to query nft collections")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to query nft collections")})
 		return
 	}
 
-	collectionMap := make(map[model.ContractID]ethmodel.NFTCollection)
+	networkToContractIDsMap := make(map[model.BlockchainNetwork][]model.ContractID)
+	contractIDToCollectionMap := make(map[model.ContractID]ethmodel.NFTCollection)
 	for _, collection := range collections {
-		collectionMap[model.ContractID{
+
+		contractID := model.ContractID{
 			Blockchain:      collection.Blockchain,
 			Network:         collection.Network,
 			ContractAddress: collection.ContractAddress,
-		}] = collection
+		}
+
+		contractIDToCollectionMap[contractID] = collection
+
+		blockchainNetwork := model.BlockchainNetwork{
+			Blockchain: collection.Blockchain,
+			Network:    collection.Network,
+		}
+
+		if _, ok := networkToContractIDsMap[blockchainNetwork]; !ok {
+			networkToContractIDsMap[blockchainNetwork] = []model.ContractID{contractID}
+		} else {
+			networkToContractIDsMap[blockchainNetwork] = append(networkToContractIDsMap[blockchainNetwork], contractID)
+		}
 	}
 
 	// Start building query
 	qb := h.NFTOwnerQuery.NewQueryBuilder()
 
-	if len(contracts) > 0 {
-		qb = qb.WithContracts(contracts)
-	}
-
-	if len(ownerAddresses) > 0 {
-		qb = qb.WithOwnerAddresses(ownerAddresses)
-	}
+	qb = qb.WithOwnerAddress(ownerAddress).WithContracts(contracts)
 
 	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb)
-
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to list nft owners")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to list nft owners")})
 		return
 	}
 
-	nftOwners := make([]apimodel.NFTOwner, 0, len(owners.Items))
-	for _, owner := range owners.Items {
-		collection := collectionMap[model.ContractID{
-			Blockchain:      owner.Blockchain,
-			Network:         owner.Network,
-			ContractAddress: owner.ContractAddress,
-		}]
+	contractIDToTokensMap := make(map[model.ContractID][]apimodel.Token, 0)
+	for _, ownership := range owners {
+		contractID := model.ContractID{
+			Blockchain:      ownership.Blockchain,
+			Network:         ownership.Network,
+			ContractAddress: ownership.ContractAddress,
+		}
 
-		nftOwners = append(nftOwners, apimodel.NFTOwner{
-			AccountIdentifier: apimodel.AccountIdentifier{
-				Address: owner.OwnerAddress,
+		token := apimodel.Token{
+			TokenID: *ownership.TokenID.ToMathBig(),
+			TransactionIdentifier: apimodel.TransactionIdentifier{
+				Hash: ownership.TransactionHash,
 			},
-			NetworkIdentifier: apimodel.NetworkIdentifier{
-				Blockchain: owner.Blockchain,
-				Network:    owner.Network,
+			BlockIdentifier: apimodel.BlockIdentifier{
+				Index:     *ownership.BlockNumber.ToMathBig(),
+				Timestamp: ownership.BlockTimestamp,
 			},
+		}
+
+		if _, ok := contractIDToTokensMap[contractID]; !ok {
+			contractIDToTokensMap[contractID] = []apimodel.Token{token}
+		} else {
+			contractIDToTokensMap[contractID] = append(contractIDToTokensMap[contractID], token)
+		}
+	}
+
+	nfts := make([]apimodel.NFT, 0)
+	for contractID, tokens := range contractIDToTokensMap {
+		collection := contractIDToCollectionMap[contractID]
+		nfts = append(nfts, apimodel.NFT{
 			Contract: apimodel.Contract{
 				Address: collection.ContractAddress,
 				Name:    collection.Name,
 			},
-			TokenID: *owner.TokenID.ToMathBig(),
-			TransactionIdentifier: apimodel.TransactionIdentifier{
-				Hash: owner.TransactionHash,
+			Balance: len(tokens),
+			Tokens:  tokens,
+		})
+	}
+
+	ownerships := make([]apimodel.NFTOwnership, 0)
+	for network, contractIDs := range networkToContractIDsMap {
+		nfts := make([]apimodel.NFT, 0)
+		for _, contractID := range contractIDs {
+			collection := contractIDToCollectionMap[contractID]
+			tokens := contractIDToTokensMap[contractID]
+			if len(tokens) == 0 {
+				continue
+			}
+			nfts = append(nfts, apimodel.NFT{
+				Contract: apimodel.Contract{
+					Address: collection.ContractAddress,
+					Name:    collection.Name,
+				},
+				Balance: len(tokens),
+				Tokens:  tokens,
+			})
+		}
+
+		ownerships = append(ownerships, apimodel.NFTOwnership{
+			AccountIdentifier: apimodel.AccountIdentifier{
+				Address: ownerAddress,
 			},
-			BlockIdentifier: apimodel.BlockIdentifier{
-				Index:     *owner.BlockNumber.ToMathBig(),
-				Timestamp: owner.BlockTimestamp,
+			NetworkIdentifier: apimodel.NetworkIdentifier{
+				Blockchain: network.Blockchain,
+				Network:    network.Network,
 			},
+			NFTs: nfts,
 		})
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
-		Result: &apimodel.CollectionOwnersResponse{
-			Items:      nftOwners,
-			TotalCount: owners.TotalCount,
-		},
+		Result: ownerships,
 	})
 }

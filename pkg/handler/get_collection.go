@@ -12,42 +12,37 @@ import (
 	"github.com/authgear/authgear-server/pkg/util/log"
 )
 
-func ConfigureListCollectionRoute(route httproute.Route) httproute.Route {
+func ConfigureGetCollectionRoute(route httproute.Route) httproute.Route {
 	return route.
 		WithMethods("GET").
-		WithPathPattern("/collections")
+		WithPathPattern("/collection/:contract_id")
 }
 
-type ListCollectionHandlerLogger struct{ *log.Logger }
+type GetCollectionHandlerLogger struct{ *log.Logger }
 
-func NewListCollectionHandlerLogger(lf *log.Factory) ListCollectionHandlerLogger {
-	return ListCollectionHandlerLogger{lf.New("api-list-collection")}
+func NewGetCollectionHandlerLogger(lf *log.Factory) GetCollectionHandlerLogger {
+	return GetCollectionHandlerLogger{lf.New("api-get-collection")}
 }
 
-type ListCollectionAPIHandler struct {
+type GetCollectionAPIHandler struct {
 	JSON               JSONResponseWriter
 	Logger             ListCollectionHandlerLogger
 	NFTCollectionQuery query.NFTCollectionQuery
 }
 
-func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	urlValues := req.URL.Query()
+func (h *GetCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	contractIDStr := httproute.GetParam(req, "contract_id")
 
-	contracts := make([]model.ContractID, 0)
-	for _, url := range urlValues["contract_id"] {
-		e, err := model.ParseContractID(url)
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to parse contract URL")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract URL")})
-			return
-		}
-
-		contracts = append(contracts, *e)
+	contractID, err := model.ParseContractID(contractIDStr)
+	if err != nil {
+		h.Logger.WithError(err).Error("failed to parse contract URL")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract URL")})
+		return
 	}
 
 	qb := h.NFTCollectionQuery.NewQueryBuilder()
 
-	qb = qb.WithContracts(contracts)
+	qb.WithContracts([]model.ContractID{*contractID})
 
 	collections, err := h.NFTCollectionQuery.ExecuteQuery(qb)
 	if err != nil {
@@ -56,9 +51,16 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 		return
 	}
 
-	nftCollections := make([]apimodel.NFTCollection, 0, len(collections))
-	for _, collection := range collections {
-		nftCollections = append(nftCollections, apimodel.NFTCollection{
+	if len(collections) == 0 {
+		h.Logger.Error("no contract found for the given contract ID")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewNotFound("no contract found for the given contract ID")})
+		return
+	}
+
+	collection := collections[0]
+
+	h.JSON.WriteResponse(resp, &authgearapi.Response{
+		Result: &apimodel.NFTCollection{
 			ID:              collection.ID,
 			Blockchain:      collection.Blockchain,
 			Network:         collection.Network,
@@ -66,12 +68,6 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 			ContractAddress: collection.ContractAddress,
 			TotalSupply:     *collection.TotalSupply.ToMathBig(),
 			Type:            string(collection.Type),
-		})
-	}
-
-	h.JSON.WriteResponse(resp, &authgearapi.Response{
-		Result: &apimodel.CollectionListResponse{
-			Items: nftCollections,
 		},
 	})
 }

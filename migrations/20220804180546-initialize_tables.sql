@@ -8,6 +8,8 @@ CREATE TABLE eth_nft_collection
 	blockchain text NOT NULL,
 	network text NOT NULL,
 	from_block_height bigint NOT NULL,
+	total_supply bigint NOT NULL,
+	type text NOT NULL,
 	created_at    timestamp without time zone NOT NULL,
     updated_at    timestamp without time zone NOT NULL
 );
