@@ -54,7 +54,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 	if err != nil {
 		h.Logger.WithError(err).Error("unable to take token from rate limiter")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{
-			Error: apierrors.NewBadRequest("rate limited"),
+			Error: apierrors.TooManyRequest.WithReason(string(apierrors.TooManyRequest)).New("rate limited"),
 		})
 		return
 	}
