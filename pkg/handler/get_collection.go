@@ -66,6 +66,7 @@ func (h *GetCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.
 			Network:         collection.Network,
 			Name:            collection.Name,
 			ContractAddress: collection.ContractAddress,
+			BlockHeight:     *collection.FromBlockHeight.ToMathBig(),
 			TotalSupply:     *collection.TotalSupply.ToMathBig(),
 			Type:            string(collection.Type),
 		},
