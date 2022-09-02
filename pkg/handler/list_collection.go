@@ -67,6 +67,7 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 			ContractAddress: collection.ContractAddress,
 			TotalSupply:     *collection.TotalSupply.ToMathBig(),
 			Type:            string(collection.Type),
+			CreatedAt:       collection.CreatedAt,
 		})
 	}
 
