@@ -122,6 +122,7 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 			Network:         collection.Network,
 			Name:            collection.Name,
 			ContractAddress: collection.ContractAddress,
+			BlockHeight:     *collection.FromBlockHeight.ToMathBig(),
 			Type:            string(collection.Type),
 			TotalSupply:     *collection.TotalSupply.ToMathBig(),
 		},

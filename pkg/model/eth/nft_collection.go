@@ -13,7 +13,8 @@ import (
 type NFTCollectionType string
 
 const (
-	NFTCollectionTypeERC721 NFTCollectionType = "erc721"
+	NFTCollectionTypeERC721  NFTCollectionType = "erc721"
+	NFTCollectionTypeERC1155 NFTCollectionType = "erc1155"
 )
 
 func ParseNFTCollectionType(t string) (NFTCollectionType, error) {
@@ -21,6 +22,8 @@ func ParseNFTCollectionType(t string) (NFTCollectionType, error) {
 	switch tokenType {
 	case "erc721":
 		return NFTCollectionTypeERC721, nil
+	case "erc1155":
+		return NFTCollectionTypeERC1155, nil
 	default:
 		return "", fmt.Errorf("unknown nft collection type: %+v", tokenType)
 	}

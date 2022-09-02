@@ -63,6 +63,7 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 			Blockchain:      collection.Blockchain,
 			Network:         collection.Network,
 			Name:            collection.Name,
+			BlockHeight:     *collection.FromBlockHeight.ToMathBig(),
 			ContractAddress: collection.ContractAddress,
 			TotalSupply:     *collection.TotalSupply.ToMathBig(),
 			Type:            string(collection.Type),
