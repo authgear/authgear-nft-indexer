@@ -19,7 +19,7 @@ type AlchemyAPI struct {
 }
 
 func (a *AlchemyAPI) GetNFTTransfers(blockchain string, network string, contractAddresses []string, fromBlock string, toBlock string, pageKey string, maxCount int64) (*apimodel.AssetTransferResponse, error) {
-	alchemyEndpoints, err := GetRequestEndpoints(blockchain, network)
+	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,6 @@ func (a *AlchemyAPI) GetNFTTransfers(blockchain string, network string, contract
 	}
 
 	requestURL := alchemyEndpoints.TransferEndpoint
-	requestURL.Path = path.Join(requestURL.Path, a.Config.Alchemy.APIKey)
 
 	log.Printf("Requesting NFT Transfers for contractAddresses: %s from network %s %s, fromBlock %s, toBlock %s", strings.Join(contractAddresses, ", "), blockchain, network, fromBlock, toBlock)
 	res, err := http.Post(requestURL.String(), "application/json", bytes.NewBuffer(jsonBody))
@@ -75,7 +74,7 @@ func (a *AlchemyAPI) GetNFTTransfers(blockchain string, network string, contract
 }
 
 func (a *AlchemyAPI) GetContractMetadata(blockchain string, network string, contractAddress string) (*apimodel.ContractMetadataResponse, error) {
-	alchemyEndpoints, err := GetRequestEndpoints(blockchain, network)
+	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
 
 	if err != nil {
 		return nil, err
@@ -86,7 +85,7 @@ func (a *AlchemyAPI) GetContractMetadata(blockchain string, network string, cont
 	}
 
 	requestURL := alchemyEndpoints.TransferEndpoint
-	requestURL.Path = path.Join(requestURL.Path, a.Config.Alchemy.APIKey, "getContractMetadata")
+	requestURL.Path = path.Join(requestURL.Path, "getContractMetadata")
 
 	requestQuery := requestURL.Query()
 	requestQuery.Set("contractAddress", contractAddress)
