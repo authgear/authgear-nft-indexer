@@ -15,9 +15,9 @@ worker:
 server:
   listen_addr: 0.0.0.0:8080
 alchemy:
-  api_key:
-    - name: eth_mainnet
-      value: 
-    - name: eth_goerli
-      value: 
-
+  - blockchain: ethereum
+    network: "1"
+    api_key: 
+  - blockchain: ethereum
+    network: "5"
+    api_key: 

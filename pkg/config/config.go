@@ -18,18 +18,18 @@ var _ = Schema.Add("Config", `
 		"worker": { "$ref": "#/$defs/WorkerConfig" },
 		"database": { "$ref": "#/$defs/DatabaseConfig" },
 		"server": { "$ref": "#/$defs/ServerConfig" },
-		"alchemy": { "$ref": "#/$defs/AlchemyConfig" }
+		"alchemy": { "type": "array", "items": { "$ref": "#/$defs/AlchemyConfig" } }
 	},
 	"required": ["redis", "worker", "database", "server", "alchemy"]
 }
 `)
 
 type Config struct {
-	Redis    RedisConfig    `json:"redis"`
-	Worker   WorkerConfig   `json:"worker"`
-	Database DatabaseConfig `json:"database"`
-	Server   ServerConfig   `json:"server"`
-	Alchemy  AlchemyConfig  `json:"alchemy"`
+	Redis    RedisConfig     `json:"redis"`
+	Worker   WorkerConfig    `json:"worker"`
+	Database DatabaseConfig  `json:"database"`
+	Server   ServerConfig    `json:"server"`
+	Alchemy  []AlchemyConfig `json:"alchemy"`
 }
 
 func Parse(inputYAML []byte) (*Config, error) {

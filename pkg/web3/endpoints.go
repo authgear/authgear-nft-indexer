@@ -18,7 +18,7 @@ type AlchemyEndpoint struct {
 	NFTEndpoint      *url.URL
 }
 
-func GetAlchemyEndpoint(alchemyConfig config.AlchemyConfig, blockchain string, network string) (endpoint string, apiKey string) {
+func GetAlchemyEndpoint(blockchain string, network string) string {
 	switch blockchain {
 	case "ethereum":
 		chainID, err := strconv.Atoi(network)
@@ -28,9 +28,9 @@ func GetAlchemyEndpoint(alchemyConfig config.AlchemyConfig, blockchain string, n
 
 		switch chainID {
 		case 1:
-			return EthereumMainnetAlchemyEndpoint, alchemyConfig.GetETHMainnetAPIKey()
+			return EthereumMainnetAlchemyEndpoint
 		case 5:
-			return EthereumGoerliAlchemyEndpoint, alchemyConfig.GetETHGoerliAPIKey()
+			return EthereumGoerliAlchemyEndpoint
 		default:
 			panic("unsupported chain ID")
 		}
@@ -39,8 +39,16 @@ func GetAlchemyEndpoint(alchemyConfig config.AlchemyConfig, blockchain string, n
 	panic("unsupported blockchain")
 }
 
-func GetRequestEndpoints(config config.AlchemyConfig, blockchain string, network string) (*AlchemyEndpoint, error) {
-	endpoint, apiKey := GetAlchemyEndpoint(config, blockchain, network)
+func GetRequestEndpoints(alchemyConfigs []config.AlchemyConfig, blockchain string, network string) (*AlchemyEndpoint, error) {
+	endpoint := GetAlchemyEndpoint(blockchain, network)
+
+	apiKey := ""
+	for _, alchemyConfig := range alchemyConfigs {
+		if alchemyConfig.Blockchain == blockchain && alchemyConfig.Network == network {
+			apiKey = alchemyConfig.APIKey
+			break
+		}
+	}
 
 	url, err := url.Parse(endpoint)
 	if err != nil {
