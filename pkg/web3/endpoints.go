@@ -4,11 +4,13 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+
+	"github.com/authgear/authgear-nft-indexer/pkg/config"
 )
 
 const (
-	// Alchemy
-	EthereumAlchemyEndpoint = "https://eth-mainnet.alchemyapi.io/v2/"
+	EthereumMainnetAlchemyEndpoint = "https://eth-mainnet.alchemyapi.io/v2/"
+	EthereumGoerliAlchemyEndpoint  = "https://eth-goerli.g.alchemy.com/v2/"
 )
 
 type AlchemyEndpoint struct {
@@ -26,7 +28,9 @@ func GetAlchemyEndpoint(blockchain string, network string) string {
 
 		switch chainID {
 		case 1:
-			return EthereumAlchemyEndpoint
+			return EthereumMainnetAlchemyEndpoint
+		case 5:
+			return EthereumGoerliAlchemyEndpoint
 		default:
 			panic("unsupported chain ID")
 		}
@@ -35,18 +39,26 @@ func GetAlchemyEndpoint(blockchain string, network string) string {
 	panic("unsupported blockchain")
 }
 
-func GetRequestEndpoints(blockchain string, network string) (*AlchemyEndpoint, error) {
+func GetRequestEndpoints(alchemyConfigs []config.AlchemyConfig, blockchain string, network string) (*AlchemyEndpoint, error) {
 	endpoint := GetAlchemyEndpoint(blockchain, network)
+
+	apiKey := ""
+	for _, alchemyConfig := range alchemyConfigs {
+		if alchemyConfig.Blockchain == blockchain && alchemyConfig.Network == network {
+			apiKey = alchemyConfig.APIKey
+			break
+		}
+	}
 
 	url, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
 	}
 	transferEndpoint := *url
-	transferEndpoint.Path = path.Join("v2")
+	transferEndpoint.Path = path.Join("v2", apiKey)
 
 	nftEndpoint := *url
-	nftEndpoint.Path = path.Join("nft", "v2")
+	nftEndpoint.Path = path.Join("nft", "v2", apiKey)
 
 	return &AlchemyEndpoint{
 		TransferEndpoint: &transferEndpoint,
