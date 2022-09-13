@@ -62,15 +62,20 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 	contractMetadata, err := h.AlchemyAPI.GetContractMetadata(contractID.Blockchain, contractID.Network, contractID.ContractAddress)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get contract metadata")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get contract metadata")})
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.BadRequest.WithReason(string(model.BadNFTCollectionError)).New("failed to get contract metadata")})
 		return
 	}
 
 	tokenType, err := ethmodel.ParseNFTCollectionType(contractMetadata.ContractMetadata.TokenType)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to parse token type")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to parse token type")})
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.BadRequest.WithReason(string(model.BadNFTCollectionError)).New("failed to parse token type")})
 		return
+	}
+
+	if contractMetadata.ContractMetadata.Name == "" || contractMetadata.ContractMetadata.TotalSupply == "" {
+		h.Logger.WithError(err).Error("missing contract metadata")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.BadRequest.WithReason(string(model.BadNFTCollectionError)).New("missing contract metadata")})
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
