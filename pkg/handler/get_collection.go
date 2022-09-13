@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
-	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
 func ConfigureGetCollectionRoute(route httproute.Route) httproute.Route {
@@ -33,7 +33,7 @@ type GetCollectionAPIHandler struct {
 func (h *GetCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	contractIDStr := httproute.GetParam(req, "contract_id")
 
-	contractID, err := model.ParseContractID(contractIDStr)
+	contractID, err := authgearweb3.ParseContractID(contractIDStr)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to parse contract URL")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract URL")})
@@ -42,7 +42,7 @@ func (h *GetCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.
 
 	qb := h.NFTCollectionQuery.NewQueryBuilder()
 
-	qb.WithContracts([]model.ContractID{*contractID})
+	qb.WithContracts([]authgearweb3.ContractID{*contractID})
 
 	collections, err := h.NFTCollectionQuery.ExecuteQuery(qb)
 	if err != nil {

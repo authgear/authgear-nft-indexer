@@ -7,13 +7,13 @@ import (
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
-	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 	"github.com/jrallison/go-workers"
 )
 
@@ -62,7 +62,7 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		return
 	}
 
-	contractID, err := model.ParseContractID(body.ContractID)
+	contractID, err := authgearweb3.ParseContractID(body.ContractID)
 	if err != nil {
 		h.Logger.WithError(err).Error("invalid contract_id")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract_id")})
