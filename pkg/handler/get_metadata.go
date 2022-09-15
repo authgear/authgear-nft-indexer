@@ -11,6 +11,7 @@ import (
 	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
 func ConfigureGetCollectionMetadataRoute(route httproute.Route) httproute.Route {
@@ -43,7 +44,7 @@ type GetCollectionMetadataAPIHandler struct {
 func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	contractIDStr := httproute.GetParam(req, "contract_id")
 
-	contractID, err := model.ParseContractID(contractIDStr)
+	contractID, err := authgearweb3.ParseContractID(contractIDStr)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to parse contract URL")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract URL")})

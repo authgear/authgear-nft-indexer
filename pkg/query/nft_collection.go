@@ -3,8 +3,8 @@ package query
 import (
 	"context"
 
-	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 	"github.com/uptrace/bun"
 )
 
@@ -17,7 +17,7 @@ type NFTCollectionQueryBuilder struct {
 	*bun.SelectQuery
 }
 
-func (b NFTCollectionQueryBuilder) WithContracts(contracts []model.ContractID) NFTCollectionQueryBuilder {
+func (b NFTCollectionQueryBuilder) WithContracts(contracts []authgearweb3.ContractID) NFTCollectionQueryBuilder {
 	if len(contracts) == 0 {
 		return b
 	}
