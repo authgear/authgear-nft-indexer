@@ -3,7 +3,7 @@ module github.com/authgear/authgear-nft-indexer
 go 1.18
 
 require (
-	github.com/authgear/authgear-server v0.0.0-20220913033941-be6f5e20da6a
+	github.com/authgear/authgear-server v0.0.0-20220921102849-5a963ca0ef96
 	github.com/go-co-op/gocron v1.16.2
 	github.com/google/wire v0.5.0
 	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
@@ -25,6 +25,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
+	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cloudflare/cfssl v1.6.1 // indirect
@@ -41,6 +42,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.1 // indirect
+	github.com/ethereum/go-ethereum v1.10.15 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
