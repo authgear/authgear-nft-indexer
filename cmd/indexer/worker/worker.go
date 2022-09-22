@@ -18,7 +18,10 @@ type Worker struct {
 }
 
 func (w *Worker) Start() {
-	worker.ConfigureWorkers(w.config.Redis)
+	err := worker.ConfigureWorkers(w.config.Redis)
+	if err != nil {
+		panic(err)
+	}
 
 	db := database.GetDatabase(w.config.Database)
 

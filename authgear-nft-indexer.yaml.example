@@ -1,6 +1,5 @@
 redis:
-  server: localhost:6379
-  database: "0"
+  url: redis://localhost:6379/0
   max_open_connection: 10
   max_idle_connection: 2
   max_conn_lifetime: 900

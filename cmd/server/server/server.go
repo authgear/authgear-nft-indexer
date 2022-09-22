@@ -17,7 +17,10 @@ type Controller struct {
 }
 
 func (c *Controller) Start() {
-	worker.ConfigureWorkers(c.Config.Redis)
+	err := worker.ConfigureWorkers(c.Config.Redis)
+	if err != nil {
+		c.logger.WithError(err).Fatal("failed to configure workers")
+	}
 
 	u, err := server.ParseListenAddress(c.Config.Server.ListenAddr)
 	if err != nil {
@@ -32,6 +35,11 @@ func (c *Controller) Start() {
 	redisPool := redis.NewPool()
 	redisHub := redis.NewHub(redisPool, lf)
 
+	redisURL, err := c.Config.Redis.RedisURL()
+	if err != nil {
+		panic(err)
+	}
+
 	redis := appredis.NewHandle(
 		redisPool,
 		redisHub,
@@ -42,7 +50,7 @@ func (c *Controller) Start() {
 			IdleConnectionTimeout: agconfig.DurationSeconds(c.Config.Redis.IdleConnectionTimeout),
 		},
 		&agconfig.RedisCredentials{
-			RedisURL: c.Config.Redis.RedisURL(),
+			RedisURL: redisURL.String(),
 		},
 		lf,
 	)
