@@ -38,9 +38,12 @@ func (b NFTOwnerQueryBuilder) WithContracts(contracts []authgearweb3.ContractID)
 	}
 }
 
-func (b NFTOwnerQueryBuilder) WithOwnerAddress(ownerAddress string) NFTOwnerQueryBuilder {
+func (b NFTOwnerQueryBuilder) WithOwner(ownerID *authgearweb3.ContractID) NFTOwnerQueryBuilder {
+	if ownerID == nil {
+		return b
+	}
 	return NFTOwnerQueryBuilder{
-		b.Where("owner_address = ?", ownerAddress),
+		b.Where("blockchain = ? AND network = ? AND owner_address = ?", ownerID.Blockchain, ownerID.Network, ownerID.ContractAddress),
 	}
 }
 
