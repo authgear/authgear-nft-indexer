@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	EthereumMainnetAlchemyEndpoint = "https://eth-mainnet.alchemyapi.io/v2/"
-	EthereumGoerliAlchemyEndpoint  = "https://eth-goerli.g.alchemy.com/v2/"
+	EthereumMainnetAlchemyEndpoint = "https://eth-mainnet.alchemyapi.io/"
+	EthereumGoerliAlchemyEndpoint  = "https://eth-goerli.g.alchemy.com/"
+	PolygonMainnetAlchemyEndpoint  = "https://polygon-mainnet.g.alchemy.com/"
+	PolygonMumbaiAlchemyEndpoint   = "https://polygon-mumbai.g.alchemy.com/"
 )
 
 type AlchemyEndpoint struct {
@@ -31,6 +33,10 @@ func GetAlchemyEndpoint(blockchain string, network string) string {
 			return EthereumMainnetAlchemyEndpoint
 		case 5:
 			return EthereumGoerliAlchemyEndpoint
+		case 137:
+			return PolygonMainnetAlchemyEndpoint
+		case 80001:
+			return PolygonMumbaiAlchemyEndpoint
 		default:
 			panic("unsupported chain ID")
 		}
