@@ -91,9 +91,7 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 	totalSupply := new(big.Int)
 	totalSupply, ok := totalSupply.SetString(contractMetadata.ContractMetadata.TotalSupply, 10)
 	if !ok {
-		h.Logger.Error("failed to parse total supply")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to parse total supply")})
-		return
+		totalSupply = nil
 	}
 
 	collection, err := h.NFTCollectionMutator.InsertNFTCollection(

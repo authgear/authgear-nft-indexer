@@ -74,9 +74,15 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
-	if contractMetadata.ContractMetadata.Name == "" || contractMetadata.ContractMetadata.TotalSupply == "" {
+	if contractMetadata.ContractMetadata.Name == "" {
 		h.Logger.WithError(err).Error("missing contract metadata")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.BadRequest.WithReason(string(model.BadNFTCollectionError)).New("missing contract metadata")})
+		return
+	}
+
+	var totalSupply *string
+	if contractMetadata.ContractMetadata.TotalSupply != "" {
+		totalSupply = &contractMetadata.ContractMetadata.TotalSupply
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
@@ -85,7 +91,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 			ContractMetadata: apimodel.GetContractMetadataContractMetadata{
 				Name:        contractMetadata.ContractMetadata.Name,
 				Symbol:      contractMetadata.ContractMetadata.Symbol,
-				TotalSupply: contractMetadata.ContractMetadata.TotalSupply,
+				TotalSupply: totalSupply,
 				TokenType:   string(tokenType),
 			},
 		},
