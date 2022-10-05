@@ -2,13 +2,11 @@ package task
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
 	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
-	"github.com/authgear/authgear-server/pkg/util/hexstring"
 	"github.com/jrallison/go-workers"
 )
 
@@ -28,7 +26,8 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 	}
 
 	if len(collections) == 0 {
-		panic("SyncNFTCollections: no NFT collections found")
+		fmt.Println("SyncNFTCollections: no NFT collections found")
+		return
 	}
 
 	nftContractAddressesByNetwork := make(map[model.BlockchainNetwork][]string, 0)
@@ -49,17 +48,11 @@ func (h *SyncETHNFTCollectionTaskHandler) Handler(message *workers.Msg) {
 	for network, contractAddresses := range nftContractAddressesByNetwork {
 		smallestBlock := smallestBlockByNetwork[network]
 
-		fromBlockHex, err := hexstring.NewFromBigInt(smallestBlock)
-		if err != nil {
-			log.Fatalf("SyncNFTCollections: failed to convert smallest block to hex string: %+v", err)
-			continue
-		}
-
 		_, err = workers.EnqueueWithOptions(h.Config.Worker.TransferQueueName, "Sync", SyncETHNFTTransfersMessageArgs{
 			Blockchain:        network.Blockchain,
 			Network:           network.Network,
 			ContractAddresses: contractAddresses,
-			FromBlock:         fromBlockHex.String(),
+			FromBlock:         smallestBlock,
 			PageKey:           "",
 		}, workers.EnqueueOptions{Retry: true})
 

@@ -47,10 +47,15 @@ func NewSyncETHNFTTransferTaskHandler(ctx context.Context, config2 config.Config
 		Ctx:     ctx,
 		Session: session,
 	}
+	nftCollectionQuery := &query.NFTCollectionQuery{
+		Ctx:     ctx,
+		Session: session,
+	}
 	syncETHNFTTransferTaskHandler := &task.SyncETHNFTTransferTaskHandler{
 		AlchemyAPI:         alchemyAPI,
 		Config:             config2,
 		NftTransferMutator: nftTransferMutator,
+		NftCollectionQuery: nftCollectionQuery,
 	}
 	return syncETHNFTTransferTaskHandler
 }
