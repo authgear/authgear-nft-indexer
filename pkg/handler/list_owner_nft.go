@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
@@ -54,21 +55,6 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		return
 	}
 
-	filteredContracts := make([]authgearweb3.ContractID, 0)
-	for _, url := range urlValues["contract_id"] {
-		e, err := authgearweb3.ParseContractID(url)
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to parse contract URL")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract URL")})
-			return
-		}
-
-		// Filter out contracts that are not in owner's network
-		if e.Blockchain == ownerID.Blockchain && e.Network == ownerID.Network {
-			filteredContracts = append(filteredContracts, *e)
-		}
-	}
-
 	collections, err := h.NFTCollectionQuery.QueryAllNFTCollections()
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to query nft collections")
@@ -86,6 +72,35 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		}
 
 		contractIDToCollectionMap[contractID] = collection
+	}
+
+	filteredContracts := make([]authgearweb3.ContractID, 0)
+	for _, url := range urlValues["contract_id"] {
+		e, err := authgearweb3.ParseContractID(url)
+		if err != nil {
+			h.Logger.WithError(err).Error("failed to parse contract ID")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract ID")})
+			return
+		}
+
+		// Check whether the contract is being watched or not
+		if _, ok := contractIDToCollectionMap[*e]; !ok {
+			h.Logger.Error("one or more contract ID(s) are not being watched")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest(fmt.Sprintf("contract %s is not being watched", url))})
+			return
+		}
+
+		// Filter out contracts that are not in owner's network
+		if e.Blockchain == ownerID.Blockchain && e.Network == ownerID.Network {
+			filteredContracts = append(filteredContracts, *e)
+		}
+	}
+
+	// Ensure there are at least one valid contract ID
+	if len(filteredContracts) == 0 {
+		h.Logger.Error("invalid contract ID")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract ID")})
+		return
 	}
 
 	// Start building query
