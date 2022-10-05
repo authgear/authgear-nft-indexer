@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 
-	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
@@ -58,18 +57,9 @@ func (h *GetCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.
 	}
 
 	collection := collections[0]
+	apiCollection := collection.ToAPIModel()
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
-		Result: &apimodel.NFTCollection{
-			ID:              collection.ID,
-			Blockchain:      collection.Blockchain,
-			Network:         collection.Network,
-			Name:            collection.Name,
-			ContractAddress: collection.ContractAddress,
-			BlockHeight:     *collection.FromBlockHeight.ToMathBig(),
-			TotalSupply:     *collection.TotalSupply.ToMathBig(),
-			Type:            string(collection.Type),
-			CreatedAt:       collection.CreatedAt,
-		},
+		Result: &apiCollection,
 	})
 }

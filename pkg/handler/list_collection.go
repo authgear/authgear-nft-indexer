@@ -58,17 +58,7 @@ func (h *ListCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http
 
 	nftCollections := make([]apimodel.NFTCollection, 0, len(collections))
 	for _, collection := range collections {
-		nftCollections = append(nftCollections, apimodel.NFTCollection{
-			ID:              collection.ID,
-			Blockchain:      collection.Blockchain,
-			Network:         collection.Network,
-			Name:            collection.Name,
-			BlockHeight:     *collection.FromBlockHeight.ToMathBig(),
-			ContractAddress: collection.ContractAddress,
-			TotalSupply:     *collection.TotalSupply.ToMathBig(),
-			Type:            string(collection.Type),
-			CreatedAt:       collection.CreatedAt,
-		})
+		nftCollections = append(nftCollections, collection.ToAPIModel())
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{

@@ -2,8 +2,10 @@ package eth
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
+	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/extra/bunbig"
 
@@ -38,6 +40,25 @@ type NFTCollection struct {
 	ContractAddress string            `bun:"contract_address,notnull"`
 	Name            string            `bun:"name,notnull"`
 	FromBlockHeight *bunbig.Int       `bun:"from_block_height,notnull"`
-	TotalSupply     *bunbig.Int       `bun:"total_supply,notnull"`
+	TotalSupply     *bunbig.Int       `bun:"total_supply"`
 	Type            NFTCollectionType `bun:"type,notnull"`
+}
+
+func (c NFTCollection) ToAPIModel() apimodel.NFTCollection {
+	var totalSupply *big.Int
+	if c.TotalSupply != nil {
+		totalSupply = c.TotalSupply.ToMathBig()
+	}
+
+	return apimodel.NFTCollection{
+		ID:              c.ID,
+		Blockchain:      c.Blockchain,
+		Network:         c.Network,
+		Name:            c.Name,
+		ContractAddress: c.ContractAddress,
+		CreatedAt:       c.CreatedAt,
+		BlockHeight:     *c.FromBlockHeight.ToMathBig(),
+		TotalSupply:     totalSupply,
+		Type:            string(c.Type),
+	}
 }

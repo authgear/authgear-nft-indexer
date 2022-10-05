@@ -113,18 +113,10 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		h.Logger.WithError(err).Error("failed to enqueue collection")
 	}
 
+	apiCollection := collection.ToAPIModel()
+
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
-		Result: &apimodel.NFTCollection{
-			ID:              collection.ID,
-			Blockchain:      collection.Blockchain,
-			Network:         collection.Network,
-			Name:            collection.Name,
-			ContractAddress: collection.ContractAddress,
-			CreatedAt:       collection.CreatedAt,
-			BlockHeight:     *collection.FromBlockHeight.ToMathBig(),
-			Type:            string(collection.Type),
-			TotalSupply:     *collection.TotalSupply.ToMathBig(),
-		},
+		Result: &apiCollection,
 	})
 
 }
