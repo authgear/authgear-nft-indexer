@@ -57,7 +57,7 @@ type AssetTransferResponse struct {
 type ContractMetadata struct {
 	Name        string `json:"name"`
 	Symbol      string `json:"symbol"`
-	TotalSupply string `json:"totalSupply"`
+	TotalSupply string `json:"totalSupply,omitempty"`
 	TokenType   string `json:"tokenType"`
 }
 

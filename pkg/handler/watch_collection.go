@@ -91,9 +91,7 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 	totalSupply := new(big.Int)
 	totalSupply, ok := totalSupply.SetString(contractMetadata.ContractMetadata.TotalSupply, 10)
 	if !ok {
-		h.Logger.Error("failed to parse total supply")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to parse total supply")})
-		return
+		totalSupply = nil
 	}
 
 	collection, err := h.NFTCollectionMutator.InsertNFTCollection(
@@ -115,18 +113,10 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		h.Logger.WithError(err).Error("failed to enqueue collection")
 	}
 
+	apiCollection := collection.ToAPIModel()
+
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
-		Result: &apimodel.NFTCollection{
-			ID:              collection.ID,
-			Blockchain:      collection.Blockchain,
-			Network:         collection.Network,
-			Name:            collection.Name,
-			ContractAddress: collection.ContractAddress,
-			CreatedAt:       collection.CreatedAt,
-			BlockHeight:     *collection.FromBlockHeight.ToMathBig(),
-			Type:            string(collection.Type),
-			TotalSupply:     *collection.TotalSupply.ToMathBig(),
-		},
+		Result: &apiCollection,
 	})
 
 }
