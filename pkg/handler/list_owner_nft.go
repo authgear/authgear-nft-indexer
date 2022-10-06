@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
@@ -27,15 +26,12 @@ func NewListOwnerNFTHandlerLogger(lf *log.Factory) ListOwnerNFTHandlerLogger {
 	return ListOwnerNFTHandlerLogger{lf.New("api-list-owner-nft")}
 }
 
-type ListOwnerNFTHandlerNFTCollectionQuery interface {
-	QueryAllNFTCollections() ([]ethmodel.NFTCollection, error)
-}
 type ListOwnerNFTAPIHandler struct {
 	JSON               JSONResponseWriter
 	Logger             ListOwnerNFTHandlerLogger
 	Config             config.Config
 	NFTOwnerQuery      query.NFTOwnerQuery
-	NFTCollectionQuery ListOwnerNFTHandlerNFTCollectionQuery
+	NFTCollectionQuery query.NFTCollectionQuery
 }
 
 func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
@@ -55,13 +51,45 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		return
 	}
 
-	collections, err := h.NFTCollectionQuery.QueryAllNFTCollections()
+	contracts := make([]authgearweb3.ContractID, 0)
+	for _, url := range urlValues["contract_id"] {
+		e, err := authgearweb3.ParseContractID(url)
+		if err != nil {
+			h.Logger.WithError(err).Error("failed to parse contract ID")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract ID")})
+			return
+		}
+
+		// Filter out contracts that are not in owner's network
+		if e.Blockchain == ownerID.Blockchain && e.Network == ownerID.Network {
+			contracts = append(contracts, *e)
+		}
+	}
+
+	// Ensure there are at least one valid contract ID
+	if len(contracts) == 0 {
+		h.Logger.Error("invalid contract ID")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract ID")})
+		return
+	}
+
+	collectionQb := h.NFTCollectionQuery.NewQueryBuilder()
+	collectionQb = collectionQb.WithContracts(contracts)
+	collections, err := h.NFTCollectionQuery.ExecuteQuery(collectionQb)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to query nft collections")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to query nft collections")})
 		return
 	}
 
+	// Ensure there are at least one collection
+	if len(contracts) == 0 {
+		h.Logger.Error("No active NFT collection")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("no active NFT collection is being watched")})
+		return
+	}
+
+	validContractIDs := make([]authgearweb3.ContractID, 0)
 	contractIDToCollectionMap := make(map[authgearweb3.ContractID]ethmodel.NFTCollection)
 	for _, collection := range collections {
 
@@ -71,42 +99,14 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 			ContractAddress: collection.ContractAddress,
 		}
 
+		validContractIDs = append(validContractIDs, contractID)
 		contractIDToCollectionMap[contractID] = collection
-	}
-
-	filteredContracts := make([]authgearweb3.ContractID, 0)
-	for _, url := range urlValues["contract_id"] {
-		e, err := authgearweb3.ParseContractID(url)
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to parse contract ID")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract ID")})
-			return
-		}
-
-		// Check whether the contract is being watched or not
-		if _, ok := contractIDToCollectionMap[*e]; !ok {
-			h.Logger.Error("one or more contract ID(s) are not being watched")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest(fmt.Sprintf("contract %s is not being watched", url))})
-			return
-		}
-
-		// Filter out contracts that are not in owner's network
-		if e.Blockchain == ownerID.Blockchain && e.Network == ownerID.Network {
-			filteredContracts = append(filteredContracts, *e)
-		}
-	}
-
-	// Ensure there are at least one valid contract ID
-	if len(filteredContracts) == 0 {
-		h.Logger.Error("invalid contract ID")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract ID")})
-		return
 	}
 
 	// Start building query
 	qb := h.NFTOwnerQuery.NewQueryBuilder()
 
-	qb = qb.WithOwner(ownerID).WithContracts(filteredContracts)
+	qb = qb.WithOwner(ownerID).WithContracts(validContractIDs)
 
 	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb)
 	if err != nil {
