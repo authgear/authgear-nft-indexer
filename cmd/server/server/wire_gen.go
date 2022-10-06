@@ -103,7 +103,7 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Ctx:     context,
 		Session: db,
 	}
-	nftCollectionQuery := &query.NFTCollectionQuery{
+	nftCollectionQuery := query.NFTCollectionQuery{
 		Ctx:     context,
 		Session: db,
 	}

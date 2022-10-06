@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/extra/bunbig"
 )
@@ -15,11 +16,11 @@ type NFTCollectionMutator struct {
 	Session *bun.DB
 }
 
-func (q *NFTCollectionMutator) InsertNFTCollection(blockchain string, network string, contractName string, contractAddress string, tokenType eth.NFTCollectionType, totalSupply *big.Int) (*eth.NFTCollection, error) {
+func (q *NFTCollectionMutator) InsertNFTCollection(contractID authgearweb3.ContractID, contractName string, tokenType eth.NFTCollectionType, totalSupply *big.Int) (*eth.NFTCollection, error) {
 	collection := &eth.NFTCollection{
-		Blockchain:      blockchain,
-		Network:         network,
-		ContractAddress: contractAddress,
+		Blockchain:      contractID.Blockchain,
+		Network:         contractID.Network,
+		ContractAddress: contractID.ContractAddress,
 		Name:            contractName,
 		FromBlockHeight: bunbig.FromInt64(0),
 		TotalSupply:     bunbig.FromMathBig(totalSupply),

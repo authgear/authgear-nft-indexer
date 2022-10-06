@@ -20,3 +20,9 @@ alchemy:
   - blockchain: ethereum
     network: "5"
     api_key: 
+  - blockchain: ethereum
+    network: "137"
+    api_key:
+  - blockchain: ethereum
+    network: "80001"
+    api_key: 
