@@ -15,10 +15,8 @@ var DependencySet = wire.NewSet(
 	query.DependencySet,
 
 	mutator.DependencySet,
-	wire.Bind(new(handler.WatchCollectionHandlerNFTCollectionMutator), new(*mutator.NFTCollectionMutator)),
 
 	web3.DependencySet,
-	wire.Bind(new(handler.WatchCollectionHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
 	wire.Bind(new(handler.GetCollectionMetadataHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
 
 	ratelimit.DependencySet,
