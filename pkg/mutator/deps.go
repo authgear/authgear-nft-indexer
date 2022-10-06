@@ -5,6 +5,5 @@ import (
 )
 
 var DependencySet = wire.NewSet(
-	wire.Struct(new(NFTTransferMutator), "*"),
 	wire.Struct(new(NFTCollectionMutator), "*"),
 )
