@@ -30,11 +30,11 @@ func NewWatchCollectionHandlerLogger(lf *log.Factory) WatchCollectionHandlerLogg
 }
 
 type WatchCollectionHandlerAlchemyAPI interface {
-	GetContractMetadata(blockchain string, network string, contractAddress string) (*apimodel.ContractMetadataResponse, error)
+	GetContractMetadata(contractID authgearweb3.ContractID) (*apimodel.ContractMetadataResponse, error)
 }
 
 type WatchCollectionHandlerNFTCollectionMutator interface {
-	InsertNFTCollection(blockchain string, network string, name string, contractAddress string, tokenType eth.NFTCollectionType, totalSupply *big.Int) (*ethmodel.NFTCollection, error)
+	InsertNFTCollection(contractID authgearweb3.ContractID, contractName string, tokenType eth.NFTCollectionType, totalSupply *big.Int) (*ethmodel.NFTCollection, error)
 }
 
 type WatchCollectionAPIHandler struct {
@@ -69,7 +69,7 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		return
 	}
 
-	contractMetadata, err := h.AlchemyAPI.GetContractMetadata(contractID.Blockchain, contractID.Network, contractID.ContractAddress)
+	contractMetadata, err := h.AlchemyAPI.GetContractMetadata(*contractID)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get contract metadata")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get contract metadata")})
@@ -95,10 +95,8 @@ func (h *WatchCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 	}
 
 	collection, err := h.NFTCollectionMutator.InsertNFTCollection(
-		contractID.Blockchain,
-		contractID.Network,
+		*contractID,
 		contractName,
-		contractID.ContractAddress,
 		tokenType,
 		totalSupply,
 	)

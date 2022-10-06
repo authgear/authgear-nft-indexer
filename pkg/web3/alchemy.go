@@ -12,6 +12,7 @@ import (
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-server/pkg/util/hexstring"
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
 type AlchemyAPI struct {
@@ -73,14 +74,14 @@ func (a *AlchemyAPI) GetNFTTransfers(blockchain string, network string, contract
 	return &response, nil
 }
 
-func (a *AlchemyAPI) GetContractMetadata(blockchain string, network string, contractAddress string) (*apimodel.ContractMetadataResponse, error) {
-	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
+func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*apimodel.ContractMetadataResponse, error) {
+	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, contractID.Blockchain, contractID.Network)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if contractAddress == "" {
+	if contractID.ContractAddress == "" {
 		return nil, fmt.Errorf("contractAddress is empty")
 	}
 
@@ -88,11 +89,11 @@ func (a *AlchemyAPI) GetContractMetadata(blockchain string, network string, cont
 	requestURL.Path = path.Join(requestURL.Path, "getContractMetadata")
 
 	requestQuery := requestURL.Query()
-	requestQuery.Set("contractAddress", contractAddress)
+	requestQuery.Set("contractAddress", contractID.ContractAddress)
 
 	requestURL.RawQuery = requestQuery.Encode()
 
-	log.Printf("Requesting contract metadata for contractAddress: %s from network %s %s", contractAddress, blockchain, network)
+	log.Printf("Requesting contract metadata for contractAddress: %s from network %s %s", contractID.ContractAddress, contractID.Blockchain, contractID.Network)
 	res, err := http.Get(requestURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)

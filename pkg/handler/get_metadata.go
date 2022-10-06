@@ -27,7 +27,7 @@ func NewGetCollectionMetadataHandlerLogger(lf *log.Factory) GetCollectionMetadat
 }
 
 type GetCollectionMetadataHandlerAlchemyAPI interface {
-	GetContractMetadata(blockchain string, network string, contractAddress string) (*apimodel.ContractMetadataResponse, error)
+	GetContractMetadata(contractID authgearweb3.ContractID) (*apimodel.ContractMetadataResponse, error)
 }
 
 type GetCollectionMeatadataRateLimiter interface {
@@ -60,7 +60,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
-	contractMetadata, err := h.AlchemyAPI.GetContractMetadata(contractID.Blockchain, contractID.Network, contractID.ContractAddress)
+	contractMetadata, err := h.AlchemyAPI.GetContractMetadata(*contractID)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get contract metadata")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.BadRequest.WithReason(string(model.BadNFTCollectionError)).New("failed to get contract metadata")})
