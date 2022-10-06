@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/database"
-	"github.com/authgear/authgear-nft-indexer/pkg/worker"
 	agconfig "github.com/authgear/authgear-server/pkg/lib/config"
 	"github.com/authgear/authgear-server/pkg/lib/infra/redis"
 	"github.com/authgear/authgear-server/pkg/lib/infra/redis/appredis"
@@ -17,11 +16,6 @@ type Controller struct {
 }
 
 func (c *Controller) Start() {
-	err := worker.ConfigureWorkers(c.Config.Redis)
-	if err != nil {
-		c.logger.WithError(err).Fatal("failed to configure workers")
-	}
-
 	u, err := server.ParseListenAddress(c.Config.Server.ListenAddr)
 	if err != nil {
 		c.logger.WithError(err).Fatal("failed to parse admin API server listen address")
