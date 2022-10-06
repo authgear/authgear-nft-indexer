@@ -15,18 +15,16 @@ var _ = Schema.Add("Config", `
 	"additionalProperties": false,
 	"properties": {
 		"redis": { "$ref": "#/$defs/RedisConfig" },
-		"worker": { "$ref": "#/$defs/WorkerConfig" },
 		"database": { "$ref": "#/$defs/DatabaseConfig" },
 		"server": { "$ref": "#/$defs/ServerConfig" },
 		"alchemy": { "type": "array", "items": { "$ref": "#/$defs/AlchemyConfig" } }
 	},
-	"required": ["redis", "worker", "database", "server", "alchemy"]
+	"required": ["redis", "database", "server", "alchemy"]
 }
 `)
 
 type Config struct {
 	Redis    RedisConfig     `json:"redis"`
-	Worker   WorkerConfig    `json:"worker"`
 	Database DatabaseConfig  `json:"database"`
 	Server   ServerConfig    `json:"server"`
 	Alchemy  []AlchemyConfig `json:"alchemy"`
