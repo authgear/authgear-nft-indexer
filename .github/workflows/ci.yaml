@@ -23,16 +23,9 @@ jobs:
   build-image:
     runs-on: ubuntu-20.04
     needs: test
-    strategy:
-      matrix:
-        include:
-          - target: indexer
-            imageName: authgear-nft-indexer
-          - target: server
-            imageName: authgear-nft-server
     env:
-      TARGET: ${{ matrix.target }}
-      IMAGE_NAME: ${{ matrix.imageName }}
+      TARGET: server
+      IMAGE_NAME: authgear-nft-server
     steps:
       - uses: actions/checkout@v3
       - run: make build-image TARGET=$TARGET IMAGE_NAME=$IMAGE_NAME
