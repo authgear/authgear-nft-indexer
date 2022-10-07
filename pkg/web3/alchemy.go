@@ -19,6 +19,57 @@ type AlchemyAPI struct {
 	Config config.Config
 }
 
+func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb3.ContractID, pageKey string) (*apimodel.GetNFTsResponse, error) {
+	blockchain := ""
+	network := ""
+	contractAddresses := make([]string, 0, len(contractIDs))
+
+	for _, contractID := range contractIDs {
+		if blockchain == "" && network == "" {
+			blockchain = contractID.Blockchain
+			network = contractID.Network
+		} else if blockchain != contractID.Blockchain || network != contractID.Network {
+			return nil, fmt.Errorf("Invalid contract IDs, blockchain networks are not the same")
+		}
+
+		contractAddresses = append(contractAddresses, contractID.ContractAddress)
+	}
+
+	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
+	if err != nil {
+		return nil, err
+	}
+
+	requestURL := alchemyEndpoints.NFTEndpoint
+	requestURL.Path = path.Join(requestURL.Path, "getNFTs")
+
+	requestQuery := requestURL.Query()
+	requestQuery.Set("owner", ownerAddress)
+	requestQuery.Set("withMetadata", "true")
+	requestQuery["contractAddresses"] = contractAddresses
+
+	if pageKey != "" {
+		requestQuery.Set("pageKey", pageKey)
+	}
+
+	requestURL.RawQuery = requestQuery.Encode()
+
+	log.Printf("Requesting nfts for owner: %s contractAddress: %s from network %s %s", ownerAddress, strings.Join(contractAddresses, ", "), blockchain, network)
+	res, err := http.Get(requestURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer res.Body.Close()
+
+	var response apimodel.GetNFTsResponse
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return &response, nil
+}
+
 func (a *AlchemyAPI) GetNFTTransfers(blockchain string, network string, contractAddresses []string, fromBlock string, toBlock string, pageKey string, maxCount int64) (*apimodel.AssetTransferResponse, error) {
 	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
 	if err != nil {

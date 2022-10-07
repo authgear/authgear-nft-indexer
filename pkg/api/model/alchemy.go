@@ -70,3 +70,30 @@ type GetOwnersForCollectionResponse struct {
 	OwnerAddresses []string `json:"ownerAddresses"`
 	PageKey        *string  `json:"pageKey,omitempty"`
 }
+
+type OwnedNFTContract struct {
+	Address string `json:"address"`
+}
+type OwnedNFTIDMetadata struct {
+	TokenType string `json:"tokenType"`
+}
+
+type OwnedNFTID struct {
+	TokenID       string             `json:"tokenId"`
+	TokenMetadata OwnedNFTIDMetadata `json:"tokenMetadata"`
+}
+type OwnedNFT struct {
+	Contract         OwnedNFTContract `json:"contract"`
+	ID               OwnedNFTID       `json:"id"`
+	Balance          string           `json:"balance"`
+	Title            string           `json:"title"`
+	Description      string           `json:"description"`
+	Error            string           `json:"error,omitempty"`
+	ContractMetadata ContractMetadata `json:"contractMetadata"`
+}
+
+type GetNFTsResponse struct {
+	OwnedNFTs  []OwnedNFT `json:"ownedNfts"`
+	PageKey    *string    `json:"pageKey,omitempty"`
+	TotalCount int        `json:"totalCount"`
+}
