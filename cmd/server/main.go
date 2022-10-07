@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/authgear/authgear-nft-indexer/cmd/server/cmd"
+	_ "github.com/authgear/authgear-nft-indexer/cmd/server/cmd/cmddatabase"
 	_ "github.com/authgear/authgear-nft-indexer/cmd/server/cmd/cmdstart"
 )
 

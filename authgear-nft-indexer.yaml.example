@@ -8,9 +8,6 @@ database:
   url: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
   pool_size: 10
   verbose: false
-worker:
-  collection_queue_name: nft_collection
-  transfer_queue_name: nft_transfer
 server:
   listen_addr: 0.0.0.0:8080
 alchemy:

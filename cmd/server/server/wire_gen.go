@@ -8,7 +8,6 @@ package server
 
 import (
 	"github.com/authgear/authgear-nft-indexer/pkg/handler"
-	"github.com/authgear/authgear-nft-indexer/pkg/mutator"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
 	"github.com/authgear/authgear-server/pkg/util/httputil"
@@ -36,34 +35,6 @@ func NewHealthCheckAPIHandler(p *handler.RequestProvider) http.Handler {
 		Context:  context,
 	}
 	return healthCheckAPIHandler
-}
-
-func NewWatchCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
-	factory := p.LogFactory
-	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
-	jsonResponseWriter := &httputil.JSONResponseWriter{
-		Logger: jsonResponseWriterLogger,
-	}
-	watchCollectionHandlerLogger := handler.NewWatchCollectionHandlerLogger(factory)
-	config := p.Config
-	alchemyAPI := &web3.AlchemyAPI{
-		Config: config,
-	}
-	request := p.Request
-	context := handler.ProvideRequestContext(request)
-	db := p.Database
-	nftCollectionMutator := &mutator.NFTCollectionMutator{
-		Ctx:     context,
-		Session: db,
-	}
-	watchCollectionAPIHandler := &handler.WatchCollectionAPIHandler{
-		JSON:                 jsonResponseWriter,
-		Logger:               watchCollectionHandlerLogger,
-		Config:               config,
-		AlchemyAPI:           alchemyAPI,
-		NFTCollectionMutator: nftCollectionMutator,
-	}
-	return watchCollectionAPIHandler
 }
 
 func NewListCollectionAPIHandler(p *handler.RequestProvider) http.Handler {

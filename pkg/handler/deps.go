@@ -21,8 +21,6 @@ var DependencySet = wire.NewSet(
 	),
 	wire.Struct(new(HealthCheckAPIHandler), "*"),
 	NewHealthCheckHandlerLogger,
-	wire.Struct(new(WatchCollectionAPIHandler), "*"),
-	NewWatchCollectionHandlerLogger,
 	wire.Struct(new(ListCollectionAPIHandler), "*"),
 	NewListCollectionHandlerLogger,
 	wire.Struct(new(ListOwnerNFTAPIHandler), "*"),

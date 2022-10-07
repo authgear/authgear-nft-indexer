@@ -20,7 +20,6 @@ func NewRouter(config config.Config, session *bun.DB, redis *appredis.Handle, lf
 	}
 	route := httproute.Route{}
 	router.Add(handler.ConfigureHealthCheckRoute(route), routeHandler.Handle(NewHealthCheckAPIHandler))
-	router.Add(handler.ConfigureWatchCollectionRoute(route), routeHandler.Handle(NewWatchCollectionAPIHandler))
 	router.Add(handler.ConfigureListCollectionRoute(route), routeHandler.Handle(NewListCollectionAPIHandler))
 	router.Add(handler.ConfigureListOwnerNFTRoute(route), routeHandler.Handle(NewListOwnerNFTAPIHandler))
 	router.Add(handler.ConfigureGetCollectionRoute(route), routeHandler.Handle(NewGetCollectionAPIHandler))
