@@ -65,3 +65,8 @@ type ContractMetadataResponse struct {
 	Address          string           `json:"address"`
 	ContractMetadata ContractMetadata `json:"contractMetadata"`
 }
+
+type GetOwnersForCollectionResponse struct {
+	OwnerAddresses []string `json:"ownerAddresses"`
+	PageKey        *string  `json:"pageKey,omitempty"`
+}

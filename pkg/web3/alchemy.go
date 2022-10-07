@@ -108,3 +108,38 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 
 	return &response, nil
 }
+
+func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) (*apimodel.GetOwnersForCollectionResponse, error) {
+	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, contractID.Blockchain, contractID.Network)
+	if err != nil {
+		return nil, err
+	}
+
+	if contractID.ContractAddress == "" {
+		return nil, fmt.Errorf("contractAddress is empty")
+	}
+
+	requestURL := alchemyEndpoints.NFTEndpoint
+	requestURL.Path = path.Join(requestURL.Path, "getOwnersForCollection")
+
+	requestQuery := requestURL.Query()
+	requestQuery.Set("contractAddress", contractID.ContractAddress)
+
+	requestURL.RawQuery = requestQuery.Encode()
+
+	log.Printf("Requesting owners for contractAddress: %s from network %s %s", contractID.ContractAddress, contractID.Blockchain, contractID.Network)
+	res, err := http.Get(requestURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer res.Body.Close()
+
+	var response apimodel.GetOwnersForCollectionResponse
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return &response, nil
+
+}
