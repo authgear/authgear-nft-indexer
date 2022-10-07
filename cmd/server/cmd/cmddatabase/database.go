@@ -8,12 +8,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	indexercmd "github.com/authgear/authgear-nft-indexer/cmd/indexer/cmd"
-	"github.com/authgear/authgear-nft-indexer/cmd/indexer/migrator"
+	servercmd "github.com/authgear/authgear-nft-indexer/cmd/server/cmd"
+	"github.com/authgear/authgear-nft-indexer/cmd/server/migrator"
 )
 
 func init() {
-	binder := indexercmd.GetBinder()
+	binder := servercmd.GetBinder()
 	cmdDatabase.AddCommand(cmdMigrate)
 
 	cmdMigrate.AddCommand(cmdMigrateNew)
@@ -22,10 +22,10 @@ func init() {
 	cmdMigrate.AddCommand(cmdMigrateStatus)
 
 	for _, cmd := range []*cobra.Command{cmdMigrateUp, cmdMigrateDown, cmdMigrateStatus} {
-		binder.BindString(cmd.Flags(), indexercmd.ArgConfig)
+		binder.BindString(cmd.Flags(), servercmd.ArgConfig)
 	}
 
-	indexercmd.Root.AddCommand(cmdDatabase)
+	servercmd.Root.AddCommand(cmdDatabase)
 }
 
 var cmdDatabase = &cobra.Command{
@@ -42,8 +42,8 @@ var cmdMigrateNew = &cobra.Command{
 	Use:    "new",
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		binder := indexercmd.GetBinder()
-		configPath, err := binder.GetRequiredString(cmd, indexercmd.ArgConfig)
+		binder := servercmd.GetBinder()
+		configPath, err := binder.GetRequiredString(cmd, servercmd.ArgConfig)
 		if err != nil {
 			return err
 		}
@@ -64,8 +64,8 @@ var cmdMigrateUp = &cobra.Command{
 	Use:   "up",
 	Short: "Migrate database schema to latest version",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		binder := indexercmd.GetBinder()
-		configPath, err := binder.GetRequiredString(cmd, indexercmd.ArgConfig)
+		binder := servercmd.GetBinder()
+		configPath, err := binder.GetRequiredString(cmd, servercmd.ArgConfig)
 		if err != nil {
 			return err
 		}
@@ -84,8 +84,8 @@ var cmdMigrateDown = &cobra.Command{
 	Use:    "down",
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		binder := indexercmd.GetBinder()
-		configPath, err := binder.GetRequiredString(cmd, indexercmd.ArgConfig)
+		binder := servercmd.GetBinder()
+		configPath, err := binder.GetRequiredString(cmd, servercmd.ArgConfig)
 		if err != nil {
 			return err
 		}
@@ -123,8 +123,8 @@ var cmdMigrateStatus = &cobra.Command{
 	Use:   "status",
 	Short: "Get database schema migration status",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		binder := indexercmd.GetBinder()
-		configPath, err := binder.GetRequiredString(cmd, indexercmd.ArgConfig)
+		binder := servercmd.GetBinder()
+		configPath, err := binder.GetRequiredString(cmd, servercmd.ArgConfig)
 		if err != nil {
 			return err
 		}
