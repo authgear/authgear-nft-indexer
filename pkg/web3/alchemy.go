@@ -70,7 +70,22 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 	return &response, nil
 }
 
-func (a *AlchemyAPI) GetNFTTransfers(blockchain string, network string, contractAddresses []string, fromBlock string, toBlock string, pageKey string, maxCount int64) (*apimodel.AssetTransferResponse, error) {
+func (a *AlchemyAPI) GetAssetTransfers(contractIDs []authgearweb3.ContractID, fromAddress string, toAddress string, fromBlock string, toBlock string, pageKey string, maxCount int64, order string) (*apimodel.AssetTransferResponse, error) {
+	blockchain := ""
+	network := ""
+	contractAddresses := make([]string, 0, len(contractIDs))
+
+	for _, contractID := range contractIDs {
+		if blockchain == "" && network == "" {
+			blockchain = contractID.Blockchain
+			network = contractID.Network
+		} else if blockchain != contractID.Blockchain || network != contractID.Network {
+			return nil, fmt.Errorf("Invalid contract IDs, blockchain networks are not the same")
+		}
+
+		contractAddresses = append(contractAddresses, contractID.ContractAddress)
+	}
+
 	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
 	if err != nil {
 		return nil, err
@@ -85,9 +100,12 @@ func (a *AlchemyAPI) GetNFTTransfers(blockchain string, network string, contract
 		ContractAddresses: contractAddresses,
 		FromBlock:         fromBlock,
 		ToBlock:           toBlock,
+		FromAddress:       fromAddress,
+		ToAddress:         toAddress,
 		PageKey:           pageKey,
+		Order:             order,
 		MaxCount:          maxCountHex.String(),
-		Category:          []string{"erc721"},
+		Category:          []string{"erc1155", "erc721"},
 		ExcludeZeroValue:  true,
 		WithMetadata:      true,
 	}
