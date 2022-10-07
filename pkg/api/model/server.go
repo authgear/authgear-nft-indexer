@@ -10,7 +10,6 @@ type NFTCollection struct {
 	Blockchain      string    `json:"blockchain"`
 	Network         string    `json:"network"`
 	Name            string    `json:"name"`
-	BlockHeight     big.Int   `json:"block_height"`
 	ContractAddress string    `json:"contract_address"`
 	TotalSupply     *big.Int  `json:"total_supply"`
 	Type            string    `json:"type"`

@@ -1,4 +1,4 @@
-package eth
+package database
 
 import (
 	"fmt"
@@ -6,10 +6,9 @@ import (
 	"strings"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/extra/bunbig"
-
-	"github.com/authgear/authgear-nft-indexer/pkg/model"
 )
 
 type NFTCollectionType string
@@ -33,15 +32,22 @@ func ParseNFTCollectionType(t string) (NFTCollectionType, error) {
 
 type NFTCollection struct {
 	bun.BaseModel `bun:"table:eth_nft_collection"`
-	model.BaseWithID
+	BaseWithID
 
 	Blockchain      string            `bun:"blockchain,notnull"`
 	Network         string            `bun:"network,notnull"`
 	ContractAddress string            `bun:"contract_address,notnull"`
 	Name            string            `bun:"name,notnull"`
-	FromBlockHeight *bunbig.Int       `bun:"from_block_height,notnull"`
 	TotalSupply     *bunbig.Int       `bun:"total_supply"`
 	Type            NFTCollectionType `bun:"type,notnull"`
+}
+
+func (c NFTCollection) ContractID() authgearweb3.ContractID {
+	return authgearweb3.ContractID{
+		Blockchain:      c.Blockchain,
+		Network:         c.Network,
+		ContractAddress: c.ContractAddress,
+	}
 }
 
 func (c NFTCollection) ToAPIModel() apimodel.NFTCollection {
@@ -57,7 +63,6 @@ func (c NFTCollection) ToAPIModel() apimodel.NFTCollection {
 		Name:            c.Name,
 		ContractAddress: c.ContractAddress,
 		CreatedAt:       c.CreatedAt,
-		BlockHeight:     *c.FromBlockHeight.ToMathBig(),
 		TotalSupply:     totalSupply,
 		Type:            string(c.Type),
 	}

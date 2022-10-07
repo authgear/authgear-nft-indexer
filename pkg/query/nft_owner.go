@@ -3,8 +3,7 @@ package query
 import (
 	"context"
 
-	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
-	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
+	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 	"github.com/uptrace/bun"
 )
@@ -49,18 +48,18 @@ func (b NFTOwnerQueryBuilder) WithOwner(ownerID *authgearweb3.ContractID) NFTOwn
 
 func (q *NFTOwnerQuery) NewQueryBuilder() NFTOwnerQueryBuilder {
 	return NFTOwnerQueryBuilder{
-		q.Session.NewSelect().Model((*ethmodel.NFTOwner)(nil)),
+		q.Session.NewSelect().Model((*database.NFTOwner)(nil)),
 	}
 }
 
-func (q *NFTOwnerQuery) ExecuteQuery(qb NFTOwnerQueryBuilder) ([]ethmodel.NFTOwner, error) {
-	nftOwners := make([]eth.NFTOwner, 0)
+func (q *NFTOwnerQuery) ExecuteQuery(qb NFTOwnerQueryBuilder) ([]database.NFTOwner, error) {
+	nftOwners := make([]database.NFTOwner, 0)
 
 	query := qb.Order("token_id ASC")
 
 	err := query.Scan(q.Ctx, &nftOwners)
 	if err != nil {
-		return []ethmodel.NFTOwner{}, err
+		return []database.NFTOwner{}, err
 	}
 
 	return nftOwners, nil

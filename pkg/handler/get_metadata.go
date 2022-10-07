@@ -5,7 +5,7 @@ import (
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
-	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
+	dbmodel "github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
@@ -67,7 +67,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
-	tokenType, err := ethmodel.ParseNFTCollectionType(contractMetadata.ContractMetadata.TokenType)
+	tokenType, err := dbmodel.ParseNFTCollectionType(contractMetadata.ContractMetadata.TokenType)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to parse token type")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.BadRequest.WithReason(string(model.BadNFTCollectionError)).New("failed to parse token type")})

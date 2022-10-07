@@ -5,7 +5,7 @@ import (
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
-	ethmodel "github.com/authgear/authgear-nft-indexer/pkg/model/eth"
+	dbmodel "github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
@@ -90,7 +90,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	}
 
 	validContractIDs := make([]authgearweb3.ContractID, 0)
-	contractIDToCollectionMap := make(map[authgearweb3.ContractID]ethmodel.NFTCollection)
+	contractIDToCollectionMap := make(map[authgearweb3.ContractID]dbmodel.NFTCollection)
 	for _, collection := range collections {
 
 		contractID := authgearweb3.ContractID{
