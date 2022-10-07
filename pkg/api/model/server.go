@@ -49,14 +49,14 @@ type BlockIdentifier struct {
 }
 
 type Token struct {
-	TokenID               big.Int               `json:"token_id"`
+	TokenID               string                `json:"token_id"`
 	TransactionIdentifier TransactionIdentifier `json:"transaction_identifier"`
 	BlockIdentifier       BlockIdentifier       `json:"block_identifier"`
+	Balance               string                `json:"balance"`
 }
 
 type NFT struct {
 	Contract Contract `json:"contract"`
-	Balance  int      `json:"balance"`
 	Tokens   []Token  `json:"tokens"`
 }
 type NFTOwnership struct {

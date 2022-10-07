@@ -8,6 +8,7 @@ package server
 
 import (
 	"github.com/authgear/authgear-nft-indexer/pkg/handler"
+	"github.com/authgear/authgear-nft-indexer/pkg/mutator"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
 	"github.com/authgear/authgear-server/pkg/util/httputil"
@@ -67,10 +68,13 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 	}
 	listOwnerNFTHandlerLogger := handler.NewListOwnerNFTHandlerLogger(factory)
 	config := p.Config
+	alchemyAPI := &web3.AlchemyAPI{
+		Config: config,
+	}
 	request := p.Request
 	context := handler.ProvideRequestContext(request)
 	db := p.Database
-	nftOwnerQuery := query.NFTOwnerQuery{
+	nftOwnerQuery := &query.NFTOwnerQuery{
 		Ctx:     context,
 		Session: db,
 	}
@@ -78,12 +82,23 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Ctx:     context,
 		Session: db,
 	}
+	nftOwnershipQuery := query.NFTOwnershipQuery{
+		Ctx:     context,
+		Session: db,
+	}
+	nftOwnershipMutator := &mutator.NFTOwnershipMutator{
+		Ctx:     context,
+		Session: db,
+	}
 	listOwnerNFTAPIHandler := &handler.ListOwnerNFTAPIHandler{
-		JSON:               jsonResponseWriter,
-		Logger:             listOwnerNFTHandlerLogger,
-		Config:             config,
-		NFTOwnerQuery:      nftOwnerQuery,
-		NFTCollectionQuery: nftCollectionQuery,
+		JSON:                jsonResponseWriter,
+		Logger:              listOwnerNFTHandlerLogger,
+		Config:              config,
+		AlchemyAPI:          alchemyAPI,
+		NFTOwnerQuery:       nftOwnerQuery,
+		NFTCollectionQuery:  nftCollectionQuery,
+		NFTOwnershipQuery:   nftOwnershipQuery,
+		NFTOwnershipMutator: nftOwnershipMutator,
 	}
 	return listOwnerNFTAPIHandler
 }

@@ -2,17 +2,26 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
+	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	dbmodel "github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
+	"github.com/authgear/authgear-server/pkg/util/hexstring"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
+	"github.com/uptrace/bun/extra/bunbig"
 )
+
+type ContractTokenID struct {
+	authgearweb3.ContractID
+	TokenID string
+}
 
 func ConfigureListOwnerNFTRoute(route httproute.Route) httproute.Route {
 	return route.
@@ -22,19 +31,143 @@ func ConfigureListOwnerNFTRoute(route httproute.Route) httproute.Route {
 
 type ListOwnerNFTHandlerLogger struct{ *log.Logger }
 
+type ListOwnerNFTHandlerNFTOwnerQuery interface {
+	QueryOwner(ownerID authgearweb3.ContractID) (*dbmodel.NFTOwner, error)
+}
+
+type ListOwnerNFTHandlerNFTOwnershipMutator interface {
+	InsertNFTOwnerships(ownerships []dbmodel.NFTOwnership) error
+}
+
+type ListOwnerNFTHandlerAlchemyAPI interface {
+	GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb3.ContractID, pageKey string) (*apimodel.GetNFTsResponse, error)
+	GetAssetTransfers(contractIDs []authgearweb3.ContractID, fromAddress string, toAddress string, fromBlock string, toBlock string, pageKey string, maxCount int64, order string) (*apimodel.AssetTransferResponse, error)
+}
+
 func NewListOwnerNFTHandlerLogger(lf *log.Factory) ListOwnerNFTHandlerLogger {
 	return ListOwnerNFTHandlerLogger{lf.New("api-list-owner-nft")}
 }
 
 type ListOwnerNFTAPIHandler struct {
-	JSON               JSONResponseWriter
-	Logger             ListOwnerNFTHandlerLogger
-	Config             config.Config
-	NFTOwnerQuery      query.NFTOwnerQuery
-	NFTCollectionQuery query.NFTCollectionQuery
+	JSON                JSONResponseWriter
+	Logger              ListOwnerNFTHandlerLogger
+	Config              config.Config
+	AlchemyAPI          ListOwnerNFTHandlerAlchemyAPI
+	NFTOwnerQuery       ListOwnerNFTHandlerNFTOwnerQuery
+	NFTCollectionQuery  query.NFTCollectionQuery
+	NFTOwnershipQuery   query.NFTOwnershipQuery
+	NFTOwnershipMutator ListOwnerNFTHandlerNFTOwnershipMutator
+}
+
+func (h *ListOwnerNFTAPIHandler) FetchAndInsertNFTTransfers(ownerID authgearweb3.ContractID, contracts []authgearweb3.ContractID) error {
+	ownerships := make([]database.NFTOwnership, 0)
+	pageKey := ""
+	nftFetchCount := 0
+	contractIDsToEnquire := make([]authgearweb3.ContractID, 0)
+	contractTokenIDToBalance := make(map[ContractTokenID]string)
+	// Fetch user nfts until no extra page or has reached the page limit
+	for ok := true; ok; ok = pageKey != "" && nftFetchCount <= h.Config.Server.MaxNFTPages {
+		nfts, err := h.AlchemyAPI.GetOwnerNFTs(ownerID.ContractAddress, contracts, pageKey)
+		if err != nil {
+			return err
+		}
+
+		for _, ownedNFT := range nfts.OwnedNFTs {
+
+			contractID := authgearweb3.ContractID{
+				Blockchain:      ownerID.Blockchain,
+				Network:         ownerID.Network,
+				ContractAddress: ownedNFT.Contract.Address,
+			}
+			contractIDsToEnquire = append(contractIDsToEnquire, contractID)
+
+			contractTokenIDToBalance[ContractTokenID{
+				ContractID: contractID,
+				TokenID:    ownedNFT.ID.TokenID,
+			}] = ownedNFT.Balance
+		}
+
+		if nfts.PageKey != nil {
+			pageKey = *nfts.PageKey
+		}
+		nftFetchCount++
+	}
+
+	pageKey = ""
+	transferFetchCount := 0
+	// Fetch transfers until no extra page or has reached the page limit
+	for ok := true; ok; ok = pageKey != "" && transferFetchCount <= 5 {
+		transfers, err := h.AlchemyAPI.GetAssetTransfers(contractIDsToEnquire, "", ownerID.ContractAddress, "0x0", "latest", pageKey, 1000, "desc")
+		if err != nil {
+			return err
+		}
+
+		for _, transfer := range transfers.Result.Transfers {
+
+			blockNum := hexstring.MustParse(transfer.BlockNum)
+
+			blockTime, err := time.Parse(time.RFC3339, transfer.Metadata.BlockTimestamp)
+			if err != nil {
+				return err
+			}
+
+			contractID := authgearweb3.ContractID{
+				Blockchain:      ownerID.Blockchain,
+				Network:         ownerID.Network,
+				ContractAddress: transfer.RawContract.Address,
+			}
+
+			// Handle ERC-1155
+			if transfer.ERC1155Metadata != nil {
+				for _, erc1155 := range *transfer.ERC1155Metadata {
+
+					balance := contractTokenIDToBalance[ContractTokenID{
+						ContractID: contractID,
+						TokenID:    erc1155.TokenID,
+					}]
+
+					ownerships = append(ownerships, dbmodel.NFTOwnership{
+						Blockchain:      contractID.Blockchain,
+						Network:         contractID.Network,
+						ContractAddress: contractID.ContractAddress,
+						TokenID:         erc1155.TokenID,
+						Balance:         balance,
+						BlockNumber:     bunbig.FromMathBig(blockNum.ToBigInt()),
+						OwnerAddress:    ownerID.ContractAddress,
+						TransactionHash: transfer.Hash,
+						BlockTimestamp:  blockTime,
+					})
+				}
+				continue
+			}
+
+			// Handle ERC-721
+			ownerships = append(ownerships, dbmodel.NFTOwnership{
+				Blockchain:      contractID.Blockchain,
+				Network:         contractID.Network,
+				ContractAddress: transfer.RawContract.Address,
+				TokenID:         transfer.TokenID,
+				Balance:         "1",
+				BlockNumber:     bunbig.FromMathBig(blockNum.ToBigInt()),
+				OwnerAddress:    ownerID.ContractAddress,
+				TransactionHash: transfer.Hash,
+				BlockTimestamp:  blockTime,
+			})
+
+		}
+		transferFetchCount++
+	}
+
+	// Insert ownerships
+	err := h.NFTOwnershipMutator.InsertNFTOwnerships(ownerships)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	now := time.Now()
 	urlValues := req.URL.Query()
 
 	ownerAddress := httproute.GetParam(req, "owner_address")
@@ -66,65 +199,80 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		}
 	}
 
+	tokenIDs := urlValues["token_id"]
+
 	// Ensure there are at least one valid contract ID
 	if len(contracts) == 0 {
-		h.Logger.Error("invalid contract ID")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract ID")})
-		return
-	}
-
-	collectionQb := h.NFTCollectionQuery.NewQueryBuilder()
-	collectionQb = collectionQb.WithContracts(contracts)
-	collections, err := h.NFTCollectionQuery.ExecuteQuery(collectionQb)
-	if err != nil {
-		h.Logger.WithError(err).Error("failed to query nft collections")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to query nft collections")})
-		return
-	}
-
-	// Ensure there are at least one collection
-	if len(contracts) == 0 {
-		h.Logger.Error("No active NFT collection")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("no active NFT collection is being watched")})
-		return
-	}
-
-	validContractIDs := make([]authgearweb3.ContractID, 0)
-	contractIDToCollectionMap := make(map[authgearweb3.ContractID]dbmodel.NFTCollection)
-	for _, collection := range collections {
-
-		contractID := authgearweb3.ContractID{
-			Blockchain:      collection.Blockchain,
-			Network:         collection.Network,
-			ContractAddress: collection.ContractAddress,
+		ownership := apimodel.NFTOwnership{
+			AccountIdentifier: apimodel.AccountIdentifier{
+				Address: ownerID.ContractAddress,
+			},
+			NetworkIdentifier: apimodel.NetworkIdentifier{
+				Blockchain: ownerID.Blockchain,
+				Network:    ownerID.Network,
+			},
+			NFTs: []apimodel.NFT{},
 		}
 
-		validContractIDs = append(validContractIDs, contractID)
+		h.JSON.WriteResponse(resp, &authgearapi.Response{
+			Result: &ownership,
+		})
+		return
+	}
+
+	owner, err := h.NFTOwnerQuery.QueryOwner(*ownerID)
+	// Check if owner exists and not expired, otherwise fetch from alchemy
+	if owner == nil || err != nil || owner.LastSyncedAt.Add(time.Second*time.Duration(h.Config.Server.CacheTTL)).Before(now) {
+		err := h.FetchAndInsertNFTTransfers(*ownerID, contracts)
+		if err != nil {
+			h.Logger.WithError(err).Error("failed to fetch user nfts")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to fetch user nfts")})
+			return
+		}
+	}
+
+	// Query ownership from database
+	ownershipQb := h.NFTOwnershipQuery.NewQueryBuilder()
+	ownershipQb = ownershipQb.WithContracts(contracts).WithOwner(ownerID)
+	if len(tokenIDs) != 0 {
+		ownershipQb = ownershipQb.WithTokenIDs(tokenIDs)
+	}
+	ownerships, err := h.NFTOwnershipQuery.ExecuteQuery(ownershipQb)
+	if err != nil {
+		h.Logger.WithError(err).Error("failed to get user nft ownerships")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get user nft ownerships")})
+		return
+	}
+
+	availableContractIDs := make([]authgearweb3.ContractID, 0)
+	for _, ownership := range ownerships {
+		availableContractIDs = append(availableContractIDs, ownership.ContractID())
+	}
+
+	// Fetch available collections
+	collectionQb := h.NFTCollectionQuery.NewQueryBuilder()
+	collectionQb = collectionQb.WithContracts(availableContractIDs)
+	uniqueCollections, err := h.NFTCollectionQuery.ExecuteQuery(collectionQb)
+	if err != nil {
+		h.Logger.WithError(err).Error("failed to get nft collections")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get nft collections")})
+		return
+	}
+
+	// Build response
+	contractIDToCollectionMap := make(map[authgearweb3.ContractID]dbmodel.NFTCollection)
+	for _, collection := range uniqueCollections {
+		contractID := collection.ContractID()
+
 		contractIDToCollectionMap[contractID] = collection
 	}
 
-	// Start building query
-	qb := h.NFTOwnerQuery.NewQueryBuilder()
-
-	qb = qb.WithOwner(ownerID).WithContracts(validContractIDs)
-
-	owners, err := h.NFTOwnerQuery.ExecuteQuery(qb)
-	if err != nil {
-		h.Logger.WithError(err).Error("failed to list nft owners")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to list nft owners")})
-		return
-	}
-
 	contractIDToTokensMap := make(map[authgearweb3.ContractID][]apimodel.Token, 0)
-	for _, ownership := range owners {
-		contractID := authgearweb3.ContractID{
-			Blockchain:      ownership.Blockchain,
-			Network:         ownership.Network,
-			ContractAddress: ownership.ContractAddress,
-		}
+	for _, ownership := range ownerships {
+		contractID := ownership.ContractID()
 
 		token := apimodel.Token{
-			TokenID: *ownership.TokenID.ToMathBig(),
+			TokenID: ownership.TokenID,
 			TransactionIdentifier: apimodel.TransactionIdentifier{
 				Hash: ownership.TransactionHash,
 			},
@@ -132,6 +280,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 				Index:     *ownership.BlockNumber.ToMathBig(),
 				Timestamp: ownership.BlockTimestamp,
 			},
+			Balance: ownership.Balance,
 		}
 
 		if _, ok := contractIDToTokensMap[contractID]; !ok {
@@ -153,8 +302,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 				Address: collection.ContractAddress,
 				Name:    collection.Name,
 			},
-			Balance: len(tokens),
-			Tokens:  tokens,
+			Tokens: tokens,
 		})
 	}
 
@@ -170,6 +318,6 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
-		Result: ownership,
+		Result: &ownership,
 	})
 }
