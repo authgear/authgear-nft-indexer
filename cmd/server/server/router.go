@@ -24,5 +24,6 @@ func NewRouter(config config.Config, session *bun.DB, redis *appredis.Handle, lf
 	router.Add(handler.ConfigureListOwnerNFTRoute(route), routeHandler.Handle(NewListOwnerNFTAPIHandler))
 	router.Add(handler.ConfigureGetCollectionRoute(route), routeHandler.Handle(NewGetCollectionAPIHandler))
 	router.Add(handler.ConfigureGetCollectionMetadataRoute(route), routeHandler.Handle(NewGetCollectionMetadataAPIHandler))
+	router.Add(handler.ConfigureProbeCollectionRoute(route), routeHandler.Handle(NewProbeCollectionAPIHandler))
 	return router
 }

@@ -7,10 +7,18 @@ import (
 	"github.com/authgear/authgear-server/pkg/util/duration"
 )
 
-func AntiSpamContractMetadataRequestBucket() ratelimit.Bucket {
+func AntiSpamContractMetadataRequestBucket(appID string) ratelimit.Bucket {
 	return ratelimit.Bucket{
-		Key:         fmt.Sprintf("contract-metadata-request"),
+		Key:         fmt.Sprintf("contract-metadata-request-%s", appID),
 		Size:        10,
+		ResetPeriod: duration.PerHour,
+	}
+}
+
+func AntiSpamProbeCollectionRequestBucket(appID string) ratelimit.Bucket {
+	return ratelimit.Bucket{
+		Key:         fmt.Sprintf("probe-collection-request-%s", appID),
+		Size:        5,
 		ResetPeriod: duration.PerHour,
 	}
 }

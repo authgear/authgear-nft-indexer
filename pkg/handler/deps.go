@@ -29,4 +29,6 @@ var DependencySet = wire.NewSet(
 	NewGetCollectionHandlerLogger,
 	wire.Struct(new(GetCollectionMetadataAPIHandler), "*"),
 	NewGetCollectionMetadataHandlerLogger,
+	wire.Struct(new(ProbeCollectionAPIHandler), "*"),
+	NewProbeCollectionHandlerLogger,
 )

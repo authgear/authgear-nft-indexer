@@ -130,3 +130,24 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 	}
 	return getCollectionMetadataAPIHandler
 }
+
+func NewProbeCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
+	factory := p.LogFactory
+	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
+	jsonResponseWriter := &httputil.JSONResponseWriter{
+		Logger: jsonResponseWriterLogger,
+	}
+	probeCollectionHandlerLogger := handler.NewProbeCollectionHandlerLogger(factory)
+	config := p.Config
+	alchemyAPI := &web3.AlchemyAPI{
+		Config: config,
+	}
+	limiter := p.RateLimiter
+	probeCollectionAPIHandler := &handler.ProbeCollectionAPIHandler{
+		JSON:        jsonResponseWriter,
+		Logger:      probeCollectionHandlerLogger,
+		AlchemyAPI:  alchemyAPI,
+		RateLimiter: limiter,
+	}
+	return probeCollectionAPIHandler
+}

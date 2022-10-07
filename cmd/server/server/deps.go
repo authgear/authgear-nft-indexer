@@ -18,9 +18,11 @@ var DependencySet = wire.NewSet(
 
 	web3.DependencySet,
 	wire.Bind(new(handler.GetCollectionMetadataHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
+	wire.Bind(new(handler.ProbeCollectionHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
 
 	ratelimit.DependencySet,
 	wire.Bind(new(handler.GetCollectionMeatadataRateLimiter), new(*agratelimit.Limiter)),
+	wire.Bind(new(handler.ProbeCollectionHandlerRateLimiter), new(*agratelimit.Limiter)),
 
 	handler.DependencySet,
 	httputil.DependencySet,

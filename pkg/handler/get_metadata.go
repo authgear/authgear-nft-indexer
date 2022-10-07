@@ -42,6 +42,14 @@ type GetCollectionMetadataAPIHandler struct {
 }
 
 func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	query := req.URL.Query()
+	appID := query.Get("app_id")
+	if appID == "" {
+		h.Logger.Error("missing app id")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing app id")})
+		return
+	}
+
 	contractIDStr := httproute.GetParam(req, "contract_id")
 
 	contractID, err := authgearweb3.ParseContractID(contractIDStr)
@@ -51,7 +59,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
-	err = h.RateLimiter.TakeToken(AntiSpamContractMetadataRequestBucket())
+	err = h.RateLimiter.TakeToken(AntiSpamContractMetadataRequestBucket(appID))
 	if err != nil {
 		h.Logger.WithError(err).Error("unable to take token from rate limiter")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{

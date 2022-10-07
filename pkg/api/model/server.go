@@ -76,3 +76,12 @@ type GetContractMetadataResponse struct {
 	Address          string                              `json:"address"`
 	ContractMetadata GetContractMetadataContractMetadata `json:"contract_metadata"`
 }
+
+type ProbeCollectionResponse struct {
+	IsLargeCollection bool `json:"is_large_collection"`
+}
+
+type ProbeCollectionRequestData struct {
+	AppID      string `json:"app_id"`
+	ContractID string `json:"contract_id"`
+}
