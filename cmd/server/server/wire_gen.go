@@ -92,12 +92,25 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 	alchemyAPI := &web3.AlchemyAPI{
 		Config: config,
 	}
+	request := p.Request
+	context := handler.ProvideRequestContext(request)
+	db := p.Database
+	nftCollectionQuery := query.NFTCollectionQuery{
+		Ctx:     context,
+		Session: db,
+	}
+	nftCollectionMutator := &mutator.NFTCollectionMutator{
+		Ctx:     context,
+		Session: db,
+	}
 	limiter := p.RateLimiter
 	getCollectionMetadataAPIHandler := &handler.GetCollectionMetadataAPIHandler{
-		JSON:        jsonResponseWriter,
-		Logger:      getCollectionMetadataHandlerLogger,
-		AlchemyAPI:  alchemyAPI,
-		RateLimiter: limiter,
+		JSON:                 jsonResponseWriter,
+		Logger:               getCollectionMetadataHandlerLogger,
+		AlchemyAPI:           alchemyAPI,
+		NFTCollectionQuery:   nftCollectionQuery,
+		NFTCollectionMutator: nftCollectionMutator,
+		RateLimiter:          limiter,
 	}
 	return getCollectionMetadataAPIHandler
 }

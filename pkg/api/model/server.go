@@ -73,8 +73,7 @@ type GetContractMetadataContractMetadata struct {
 }
 
 type GetContractMetadataResponse struct {
-	Address          string                              `json:"address"`
-	ContractMetadata GetContractMetadataContractMetadata `json:"contract_metadata"`
+	Collections []NFTCollection `json:"collections"`
 }
 
 type ProbeCollectionResponse struct {
