@@ -32,8 +32,7 @@ func (b NFTCollectionQueryBuilder) WithContracts(contracts []authgearweb3.Contra
 		contractAddresses = append(contractAddresses, contract.ContractAddress)
 	}
 	return NFTCollectionQueryBuilder{
-		// We only support erc721 for now
-		b.Where("blockchain IN (?) AND network IN (?) AND contract_address IN (?) AND type = ?", bun.In(blockchains), bun.In(networks), bun.In(contractAddresses), database.NFTCollectionTypeERC721),
+		b.Where("blockchain IN (?) AND network IN (?) AND contract_address IN (?)", bun.In(blockchains), bun.In(networks), bun.In(contractAddresses)),
 	}
 
 }
