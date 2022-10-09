@@ -15,8 +15,8 @@ type NFTOwnership struct {
 	Blockchain      string      `bun:"blockchain,notnull"`
 	Network         string      `bun:"network,notnull"`
 	ContractAddress string      `bun:"contract_address,notnull"`
-	TokenID         *bunbig.Int `bun:"token_id,notnull"`
-	Balance         *bunbig.Int `bun:"balance,notnull"`
+	TokenID         string      `bun:"token_id,notnull"`
+	Balance         string      `bun:"balance,notnull"`
 	BlockNumber     *bunbig.Int `bun:"block_number,notnull"`
 	OwnerAddress    string      `bun:"owner_address,notnull"`
 	TransactionHash string      `bun:"txn_hash,notnull"`
