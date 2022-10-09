@@ -16,22 +16,10 @@ func NewHealthCheckAPIHandler(
 	panic(wire.Build(DependencySet, wire.Bind(new(http.Handler), new(*handler.HealthCheckAPIHandler))))
 }
 
-func NewListCollectionAPIHandler(
-	p *handler.RequestProvider,
-) http.Handler {
-	panic(wire.Build(DependencySet, wire.Bind(new(http.Handler), new(*handler.ListCollectionAPIHandler))))
-}
-
 func NewListOwnerNFTAPIHandler(
 	p *handler.RequestProvider,
 ) http.Handler {
 	panic(wire.Build(DependencySet, wire.Bind(new(http.Handler), new(*handler.ListOwnerNFTAPIHandler))))
-}
-
-func NewGetCollectionAPIHandler(
-	p *handler.RequestProvider,
-) http.Handler {
-	panic(wire.Build(DependencySet, wire.Bind(new(http.Handler), new(*handler.GetCollectionAPIHandler))))
 }
 
 func NewGetCollectionMetadataAPIHandler(

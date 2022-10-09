@@ -38,28 +38,6 @@ func NewHealthCheckAPIHandler(p *handler.RequestProvider) http.Handler {
 	return healthCheckAPIHandler
 }
 
-func NewListCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
-	factory := p.LogFactory
-	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
-	jsonResponseWriter := &httputil.JSONResponseWriter{
-		Logger: jsonResponseWriterLogger,
-	}
-	listCollectionHandlerLogger := handler.NewListCollectionHandlerLogger(factory)
-	request := p.Request
-	context := handler.ProvideRequestContext(request)
-	db := p.Database
-	nftCollectionQuery := query.NFTCollectionQuery{
-		Ctx:     context,
-		Session: db,
-	}
-	listCollectionAPIHandler := &handler.ListCollectionAPIHandler{
-		JSON:               jsonResponseWriter,
-		Logger:             listCollectionHandlerLogger,
-		NFTCollectionQuery: nftCollectionQuery,
-	}
-	return listCollectionAPIHandler
-}
-
 func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 	factory := p.LogFactory
 	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
@@ -101,28 +79,6 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		NFTOwnershipMutator: nftOwnershipMutator,
 	}
 	return listOwnerNFTAPIHandler
-}
-
-func NewGetCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
-	factory := p.LogFactory
-	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
-	jsonResponseWriter := &httputil.JSONResponseWriter{
-		Logger: jsonResponseWriterLogger,
-	}
-	listCollectionHandlerLogger := handler.NewListCollectionHandlerLogger(factory)
-	request := p.Request
-	context := handler.ProvideRequestContext(request)
-	db := p.Database
-	nftCollectionQuery := query.NFTCollectionQuery{
-		Ctx:     context,
-		Session: db,
-	}
-	getCollectionAPIHandler := &handler.GetCollectionAPIHandler{
-		JSON:               jsonResponseWriter,
-		Logger:             listCollectionHandlerLogger,
-		NFTCollectionQuery: nftCollectionQuery,
-	}
-	return getCollectionAPIHandler
 }
 
 func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler {
