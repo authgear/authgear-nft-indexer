@@ -127,11 +127,24 @@ func NewProbeCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 		Config: config,
 	}
 	limiter := p.RateLimiter
+	request := p.Request
+	context := handler.ProvideRequestContext(request)
+	db := p.Database
+	nftCollectionProbeQuery := &query.NFTCollectionProbeQuery{
+		Ctx:     context,
+		Session: db,
+	}
+	nftCollectionProbeMutator := &mutator.NFTCollectionProbeMutator{
+		Ctx:     context,
+		Session: db,
+	}
 	probeCollectionAPIHandler := &handler.ProbeCollectionAPIHandler{
-		JSON:        jsonResponseWriter,
-		Logger:      probeCollectionHandlerLogger,
-		AlchemyAPI:  alchemyAPI,
-		RateLimiter: limiter,
+		JSON:                      jsonResponseWriter,
+		Logger:                    probeCollectionHandlerLogger,
+		AlchemyAPI:                alchemyAPI,
+		RateLimiter:               limiter,
+		NFTCollectionProbeQuery:   nftCollectionProbeQuery,
+		NFTCollectionProbeMutator: nftCollectionProbeMutator,
 	}
 	return probeCollectionAPIHandler
 }

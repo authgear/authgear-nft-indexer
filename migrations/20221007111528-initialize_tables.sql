@@ -1,5 +1,14 @@
 -- +migrate Up
 
+CREATE TABLE nft_collection_probe
+(
+	blockchain text NOT NULL,
+	network text NOT NULL,
+	contract_address text NOT NULL,
+	is_large_collection boolean NOT NULL
+);
+
+CREATE UNIQUE INDEX nft_collection_probe_unq_collection_idx ON nft_collection_probe (blockchain, network, contract_address);
 
 CREATE TABLE eth_nft_collection
 (
@@ -49,3 +58,4 @@ CREATE UNIQUE INDEX nft_owner_unq_owner_idx ON nft_owner (blockchain, network, a
 DROP TABLE nft_owner;
 DROP TABLE eth_nft_ownership;
 DROP TABLE eth_nft_collection;
+DROP TABLE nft_collection_probe;
