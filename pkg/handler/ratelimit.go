@@ -18,7 +18,7 @@ func AntiSpamContractMetadataRequestBucket(appID string) ratelimit.Bucket {
 func AntiSpamProbeCollectionRequestBucket(appID string) ratelimit.Bucket {
 	return ratelimit.Bucket{
 		Key:         fmt.Sprintf("probe-collection-request-%s", appID),
-		Size:        5,
+		Size:        60,
 		ResetPeriod: duration.PerHour,
 	}
 }
