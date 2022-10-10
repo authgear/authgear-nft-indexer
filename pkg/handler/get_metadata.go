@@ -87,15 +87,36 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
-	contractIDToCollectionMap := make(map[authgearweb3.ContractID]*dbmodel.NFTCollection)
+	contractIDToCollectionMap := make(map[string]*dbmodel.NFTCollection)
 	for i, collection := range collections {
-		contractIDToCollectionMap[collection.ContractID()] = &collections[i]
+		contractID, err := collection.ContractID()
+		if err != nil {
+			h.Logger.WithError(err).Error("failed to parse collection contract ID")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to parse collection contract ID")})
+			return
+		}
+
+		contractURL, err := contractID.URL()
+		if err != nil {
+			h.Logger.WithError(err).Error("failed to convert collection contract ID to URL")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to convert collection contract ID to URL")})
+			return
+		}
+
+		contractIDToCollectionMap[contractURL.String()] = &collections[i]
 	}
 
 	res := make([]apimodel.NFTCollection, 0, len(contracts))
 	for _, contract := range contracts {
+		contractURL, err := contract.URL()
+		if err != nil {
+			h.Logger.WithError(err).Error("failed to convert collection contract ID to URL")
+			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to convert collection contract ID to URL")})
+			return
+		}
+
 		// If exists, append to result, otherwise get from alchemy
-		collection := contractIDToCollectionMap[contract]
+		collection := contractIDToCollectionMap[contractURL.String()]
 		if collection != nil {
 			res = append(res, collection.ToAPIModel())
 			continue

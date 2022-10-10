@@ -29,7 +29,7 @@ func (b NFTOwnershipQueryBuilder) WithContracts(contracts []authgearweb3.Contrac
 	for _, contract := range contracts {
 		blockchains = append(blockchains, contract.Blockchain)
 		networks = append(networks, contract.Network)
-		contractAddresses = append(contractAddresses, contract.ContractAddress)
+		contractAddresses = append(contractAddresses, contract.Address)
 	}
 
 	return NFTOwnershipQueryBuilder{
@@ -52,7 +52,7 @@ func (b NFTOwnershipQueryBuilder) WithOwner(ownerID *authgearweb3.ContractID) NF
 		return b
 	}
 	return NFTOwnershipQueryBuilder{
-		b.Where("blockchain = ? AND network = ? AND owner_address = ?", ownerID.Blockchain, ownerID.Network, ownerID.ContractAddress),
+		b.Where("blockchain = ? AND network = ? AND owner_address = ?", ownerID.Blockchain, ownerID.Network, ownerID.Address),
 	}
 }
 

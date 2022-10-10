@@ -18,7 +18,7 @@ func (q *NFTOwnerQuery) QueryOwner(ownerID authgearweb3.ContractID) (*database.N
 
 	err := q.Session.NewSelect().
 		Model(owner).
-		Where("blockchain = ? AND network = ? AND address = ?", ownerID.Blockchain, ownerID.Network, ownerID.ContractAddress).
+		Where("blockchain = ? AND network = ? AND address = ?", ownerID.Blockchain, ownerID.Network, ownerID.Address).
 		Scan(q.Ctx)
 	if err != nil {
 		return nil, err

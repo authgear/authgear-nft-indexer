@@ -1,6 +1,7 @@
 package database
 
 import (
+	"net/url"
 	"time"
 
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
@@ -23,10 +24,6 @@ type NFTOwnership struct {
 	BlockTimestamp  time.Time   `bun:"block_timestamp,notnull"`
 }
 
-func (c NFTOwnership) ContractID() authgearweb3.ContractID {
-	return authgearweb3.ContractID{
-		Blockchain:      c.Blockchain,
-		Network:         c.Network,
-		ContractAddress: c.ContractAddress,
-	}
+func (c NFTOwnership) ContractID() (*authgearweb3.ContractID, error) {
+	return authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress, url.Values{})
 }

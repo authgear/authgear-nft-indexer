@@ -31,7 +31,7 @@ type GetAssetTransferParams struct {
 func (p *GetAssetTransferParams) ToRequestParams() (*apimodel.AssetTransferRequestParams, error) {
 	contractAddresses := make([]string, 0, len(p.ContractIDs))
 	for _, contractID := range p.ContractIDs {
-		contractAddresses = append(contractAddresses, contractID.ContractAddress)
+		contractAddresses = append(contractAddresses, contractID.Address)
 	}
 
 	maxCountHex, err := hexstring.NewFromInt64(p.MaxCount)
@@ -67,7 +67,7 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 			return nil, fmt.Errorf("Invalid contract IDs, blockchain networks are not the same")
 		}
 
-		contractAddresses = append(contractAddresses, contractID.ContractAddress)
+		contractAddresses = append(contractAddresses, contractID.Address)
 	}
 
 	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
@@ -165,7 +165,7 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 		return nil, err
 	}
 
-	if contractID.ContractAddress == "" {
+	if contractID.Address == "" {
 		return nil, fmt.Errorf("contractAddress is empty")
 	}
 
@@ -173,7 +173,7 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 	requestURL.Path = path.Join(requestURL.Path, "getContractMetadata")
 
 	requestQuery := requestURL.Query()
-	requestQuery.Set("contractAddress", contractID.ContractAddress)
+	requestQuery.Set("contractAddress", contractID.Address)
 
 	requestURL.RawQuery = requestQuery.Encode()
 
@@ -198,7 +198,7 @@ func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) 
 		return nil, err
 	}
 
-	if contractID.ContractAddress == "" {
+	if contractID.Address == "" {
 		return nil, fmt.Errorf("contractAddress is empty")
 	}
 
@@ -206,7 +206,7 @@ func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) 
 	requestURL.Path = path.Join(requestURL.Path, "getOwnersForCollection")
 
 	requestQuery := requestURL.Query()
-	requestQuery.Set("contractAddress", contractID.ContractAddress)
+	requestQuery.Set("contractAddress", contractID.Address)
 
 	requestURL.RawQuery = requestQuery.Encode()
 

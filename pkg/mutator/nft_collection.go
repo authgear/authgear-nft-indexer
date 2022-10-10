@@ -20,7 +20,7 @@ func (q *NFTCollectionMutator) InsertNFTCollection(contractID authgearweb3.Contr
 	collection := &database.NFTCollection{
 		Blockchain:      contractID.Blockchain,
 		Network:         contractID.Network,
-		ContractAddress: contractID.ContractAddress,
+		ContractAddress: contractID.Address,
 		Name:            contractName,
 		TotalSupply:     bunbig.FromMathBig(totalSupply),
 		Type:            tokenType,

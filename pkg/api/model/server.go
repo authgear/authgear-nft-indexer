@@ -66,13 +66,6 @@ type NFTOwnership struct {
 	NFTs              []NFT             `json:"nfts"`
 }
 
-type GetContractMetadataContractMetadata struct {
-	Name        string  `json:"name"`
-	Symbol      string  `json:"symbol"`
-	TotalSupply *string `json:"total_supply"`
-	TokenType   string  `json:"token_type"`
-}
-
 type GetContractMetadataResponse struct {
 	Collections []NFTCollection `json:"collections"`
 }

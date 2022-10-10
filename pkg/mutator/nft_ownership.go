@@ -2,6 +2,7 @@ package mutator
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
@@ -20,20 +21,29 @@ func (q *NFTOwnershipMutator) InsertNFTOwnerships(ownerships []database.NFTOwner
 	}
 
 	uniqueOwners := make([]database.NFTOwner, 0)
-	ids := make(map[authgearweb3.ContractID]bool)
+	ids := make(map[string]bool)
 	for _, ownership := range ownerships {
-		contractID := authgearweb3.ContractID{
-			Blockchain:      ownership.Blockchain,
-			Network:         ownership.Network,
-			ContractAddress: ownership.OwnerAddress,
+		ownerID, err := authgearweb3.NewContractID(
+			ownership.Blockchain,
+			ownership.Network,
+			ownership.OwnerAddress,
+			url.Values{},
+		)
+		if err != nil {
+			return err
 		}
 
-		if _, value := ids[contractID]; !value {
-			ids[contractID] = true
+		ownerURL, err := ownerID.URL()
+		if err != nil {
+			return err
+		}
+
+		if _, value := ids[ownerURL.String()]; !value {
+			ids[ownerURL.String()] = true
 			uniqueOwners = append(uniqueOwners, database.NFTOwner{
-				Blockchain:   contractID.Blockchain,
-				Network:      contractID.Network,
-				Address:      contractID.ContractAddress,
+				Blockchain:   ownerID.Blockchain,
+				Network:      ownerID.Network,
+				Address:      ownerID.Address,
 				LastSyncedAt: database.NewTimestamp(),
 			})
 		}

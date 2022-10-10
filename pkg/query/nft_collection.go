@@ -29,7 +29,7 @@ func (b NFTCollectionQueryBuilder) WithContracts(contracts []authgearweb3.Contra
 	for _, contract := range contracts {
 		blockchains = append(blockchains, contract.Blockchain)
 		networks = append(networks, contract.Network)
-		contractAddresses = append(contractAddresses, contract.ContractAddress)
+		contractAddresses = append(contractAddresses, contract.Address)
 	}
 	return NFTCollectionQueryBuilder{
 		b.Where("blockchain IN (?) AND network IN (?) AND contract_address IN (?)", bun.In(blockchains), bun.In(networks), bun.In(contractAddresses)),

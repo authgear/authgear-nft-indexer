@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"math/big"
+	"net/url"
 	"strings"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
@@ -42,12 +43,8 @@ type NFTCollection struct {
 	Type            NFTCollectionType `bun:"type,notnull"`
 }
 
-func (c NFTCollection) ContractID() authgearweb3.ContractID {
-	return authgearweb3.ContractID{
-		Blockchain:      c.Blockchain,
-		Network:         c.Network,
-		ContractAddress: c.ContractAddress,
-	}
+func (c NFTCollection) ContractID() (*authgearweb3.ContractID, error) {
+	return authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress, url.Values{})
 }
 
 func (c NFTCollection) ToAPIModel() apimodel.NFTCollection {
