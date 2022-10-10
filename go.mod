@@ -3,7 +3,7 @@ module github.com/authgear/authgear-nft-indexer
 go 1.18
 
 require (
-	github.com/authgear/authgear-server v0.0.0-20220921102849-5a963ca0ef96
+	github.com/authgear/authgear-server v0.0.0-20221011105753-0a6be8dc8bc0
 	github.com/google/wire v0.5.0
 	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
 	github.com/oklog/ulid/v2 v2.1.0
