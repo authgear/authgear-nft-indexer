@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"path"
-	"strings"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
@@ -54,7 +52,6 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 
 	requestURL.RawQuery = requestQuery.Encode()
 
-	log.Printf("Requesting nfts for owner: %s contractAddress: %s from network %s %s", ownerAddress, strings.Join(contractAddresses, ", "), blockchain, network)
 	res, err := http.Get(requestURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -123,7 +120,6 @@ func (a *AlchemyAPI) GetAssetTransfers(contractIDs []authgearweb3.ContractID, fr
 
 	requestURL := alchemyEndpoints.TransferEndpoint
 
-	log.Printf("Requesting NFT Transfers for contractAddresses: %s from network %s %s, fromBlock %s, toBlock %s", strings.Join(contractAddresses, ", "), blockchain, network, fromBlock, toBlock)
 	res, err := http.Post(requestURL.String(), "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -162,7 +158,6 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 
 	requestURL.RawQuery = requestQuery.Encode()
 
-	log.Printf("Requesting contract metadata for contractAddress: %s from network %s %s", contractID.ContractAddress, contractID.Blockchain, contractID.Network)
 	res, err := http.Get(requestURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -196,7 +191,6 @@ func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) 
 
 	requestURL.RawQuery = requestQuery.Encode()
 
-	log.Printf("Requesting owners for contractAddress: %s from network %s %s", contractID.ContractAddress, contractID.Blockchain, contractID.Network)
 	res, err := http.Get(requestURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
