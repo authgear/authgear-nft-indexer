@@ -37,6 +37,7 @@ type NetworkIdentifier struct {
 type Contract struct {
 	Name    string `json:"name"`
 	Address string `json:"address"`
+	Type    string `json:"type"`
 }
 
 type TransactionIdentifier struct {

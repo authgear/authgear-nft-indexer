@@ -296,11 +296,11 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		if len(tokens) == 0 {
 			continue
 		}
-
 		nfts = append(nfts, apimodel.NFT{
 			Contract: apimodel.Contract{
 				Address: collection.ContractAddress,
 				Name:    collection.Name,
+				Type:    string(collection.Type),
 			},
 			Tokens: tokens,
 		})
