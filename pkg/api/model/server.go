@@ -3,6 +3,8 @@ package model
 import (
 	"math/big"
 	"time"
+
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
 type NFTCollection struct {
@@ -64,6 +66,19 @@ type NFTOwnership struct {
 	AccountIdentifier AccountIdentifier `json:"account_identifier"`
 	NetworkIdentifier NetworkIdentifier `json:"network_identifier"`
 	NFTs              []NFT             `json:"nfts"`
+}
+
+func NewNFTOwnership(ownerID authgearweb3.ContractID, nfts []NFT) NFTOwnership {
+	return NFTOwnership{
+		AccountIdentifier: AccountIdentifier{
+			Address: ownerID.Address,
+		},
+		NetworkIdentifier: NetworkIdentifier{
+			Blockchain: ownerID.Blockchain,
+			Network:    ownerID.Network,
+		},
+		NFTs: nfts,
+	}
 }
 
 type GetContractMetadataResponse struct {

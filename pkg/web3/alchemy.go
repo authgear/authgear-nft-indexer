@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"path"
 
-	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
+	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	"github.com/authgear/authgear-server/pkg/util/hexstring"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
@@ -28,7 +28,7 @@ type GetAssetTransferParams struct {
 	Order       string
 }
 
-func (p *GetAssetTransferParams) ToRequestParams() (*apimodel.AssetTransferRequestParams, error) {
+func (p *GetAssetTransferParams) ToRequestParams() (*alchemy.AssetTransferRequestParams, error) {
 	contractAddresses := make([]string, 0, len(p.ContractIDs))
 	for _, contractID := range p.ContractIDs {
 		contractAddresses = append(contractAddresses, contractID.Address)
@@ -39,7 +39,7 @@ func (p *GetAssetTransferParams) ToRequestParams() (*apimodel.AssetTransferReque
 		return nil, fmt.Errorf("invalid maxCount: %w", err)
 	}
 
-	return &apimodel.AssetTransferRequestParams{
+	return &alchemy.AssetTransferRequestParams{
 		ContractAddresses: contractAddresses,
 		FromBlock:         p.FromBlock,
 		ToBlock:           p.ToBlock,
@@ -54,7 +54,7 @@ func (p *GetAssetTransferParams) ToRequestParams() (*apimodel.AssetTransferReque
 	}, nil
 }
 
-func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb3.ContractID, pageKey string) (*apimodel.GetNFTsResponse, error) {
+func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb3.ContractID, pageKey string) (*alchemy.GetNFTsResponse, error) {
 	blockchain := ""
 	network := ""
 	contractAddresses := make([]string, 0, len(contractIDs))
@@ -81,7 +81,7 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 	requestQuery := requestURL.Query()
 	requestQuery.Set("owner", ownerAddress)
 	requestQuery.Set("withMetadata", "true")
-	requestQuery["contractAddresses"] = contractAddresses
+	requestQuery[`contractAddresses[]`] = contractAddresses
 
 	if pageKey != "" {
 		requestQuery.Set("pageKey", pageKey)
@@ -95,7 +95,7 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 	}
 	defer res.Body.Close()
 
-	var response apimodel.GetNFTsResponse
+	var response alchemy.GetNFTsResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -104,7 +104,7 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 	return &response, nil
 }
 
-func (a *AlchemyAPI) GetAssetTransfers(params GetAssetTransferParams) (*apimodel.AssetTransferResponse, error) {
+func (a *AlchemyAPI) GetAssetTransfers(params GetAssetTransferParams) (*alchemy.AssetTransferResult, error) {
 	blockchain := ""
 	network := ""
 	for _, contractID := range params.ContractIDs {
@@ -145,7 +145,7 @@ func (a *AlchemyAPI) GetAssetTransfers(params GetAssetTransferParams) (*apimodel
 	}
 	defer res.Body.Close()
 
-	var response apimodel.AssetTransferResponse
+	var response alchemy.AssetTransferResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -155,10 +155,10 @@ func (a *AlchemyAPI) GetAssetTransfers(params GetAssetTransferParams) (*apimodel
 		return nil, fmt.Errorf("failed to get NFT transfers: %s", response.Error.Message)
 	}
 
-	return &response, nil
+	return &response.Result, nil
 }
 
-func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*apimodel.ContractMetadataResponse, error) {
+func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*alchemy.ContractMetadataResponse, error) {
 	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, contractID.Blockchain, contractID.Network)
 
 	if err != nil {
@@ -183,7 +183,7 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 	}
 	defer res.Body.Close()
 
-	var response apimodel.ContractMetadataResponse
+	var response alchemy.ContractMetadataResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -192,7 +192,7 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 	return &response, nil
 }
 
-func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) (*apimodel.GetOwnersForCollectionResponse, error) {
+func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) (*alchemy.GetOwnersForCollectionResponse, error) {
 	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, contractID.Blockchain, contractID.Network)
 	if err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) 
 	}
 	defer res.Body.Close()
 
-	var response apimodel.GetOwnersForCollectionResponse
+	var response alchemy.GetOwnersForCollectionResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)

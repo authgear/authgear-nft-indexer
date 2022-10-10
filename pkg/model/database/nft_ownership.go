@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"time"
 
+	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/extra/bunbig"
@@ -26,4 +27,18 @@ type NFTOwnership struct {
 
 func (c NFTOwnership) ContractID() (*authgearweb3.ContractID, error) {
 	return authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress, url.Values{})
+}
+
+func (c NFTOwnership) ToAPIToken() apimodel.Token {
+	return apimodel.Token{
+		TokenID: c.TokenID,
+		TransactionIdentifier: apimodel.TransactionIdentifier{
+			Hash: c.TransactionHash,
+		},
+		BlockIdentifier: apimodel.BlockIdentifier{
+			Index:     *c.BlockNumber.ToMathBig(),
+			Timestamp: c.BlockTimestamp,
+		},
+		Balance: c.Balance,
+	}
 }

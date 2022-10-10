@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
+	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
@@ -26,7 +27,7 @@ func NewProbeCollectionHandlerLogger(lf *log.Factory) ProbeCollectionHandlerLogg
 }
 
 type ProbeCollectionHandlerAlchemyAPI interface {
-	GetOwnersForCollection(contractID authgearweb3.ContractID) (*apimodel.GetOwnersForCollectionResponse, error)
+	GetOwnersForCollection(contractID authgearweb3.ContractID) (*alchemy.GetOwnersForCollectionResponse, error)
 }
 
 type ProbeCollectionHandlerRateLimiter interface {

@@ -64,3 +64,25 @@ func (c NFTCollection) ToAPIModel() apimodel.NFTCollection {
 		Type:            string(c.Type),
 	}
 }
+
+func (c NFTCollection) ToAPINFT(ownerships []NFTOwnership) *apimodel.NFT {
+	tokens := make([]apimodel.Token, 0)
+	for _, ownership := range ownerships {
+		if ownership.Blockchain == c.Blockchain && ownership.Network == c.Network && ownership.ContractAddress == c.ContractAddress {
+			tokens = append(tokens, ownership.ToAPIToken())
+		}
+	}
+
+	if len(tokens) == 0 {
+		return nil
+	}
+
+	return &apimodel.NFT{
+		Contract: apimodel.Contract{
+			Address: c.ContractAddress,
+			Name:    c.Name,
+			Type:    string(c.Type),
+		},
+		Tokens: tokens,
+	}
+}

@@ -6,6 +6,7 @@ import (
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/model"
+	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	dbmodel "github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
@@ -29,7 +30,7 @@ func NewGetCollectionMetadataHandlerLogger(lf *log.Factory) GetCollectionMetadat
 }
 
 type GetCollectionMetadataHandlerAlchemyAPI interface {
-	GetContractMetadata(contractID authgearweb3.ContractID) (*apimodel.ContractMetadataResponse, error)
+	GetContractMetadata(contractID authgearweb3.ContractID) (*alchemy.ContractMetadataResponse, error)
 }
 
 type GetCollectionMetadataRateLimiter interface {
