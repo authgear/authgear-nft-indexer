@@ -17,6 +17,43 @@ type AlchemyAPI struct {
 	Config config.Config
 }
 
+type GetAssetTransferParams struct {
+	ContractIDs []authgearweb3.ContractID
+	FromAddress string
+	ToAddress   string
+	FromBlock   string
+	ToBlock     string
+	PageKey     string
+	MaxCount    int64
+	Order       string
+}
+
+func (p *GetAssetTransferParams) ToRequestParams() (*apimodel.AssetTransferRequestParams, error) {
+	contractAddresses := make([]string, 0, len(p.ContractIDs))
+	for _, contractID := range p.ContractIDs {
+		contractAddresses = append(contractAddresses, contractID.ContractAddress)
+	}
+
+	maxCountHex, err := hexstring.NewFromInt64(p.MaxCount)
+	if err != nil {
+		return nil, fmt.Errorf("invalid maxCount: %w", err)
+	}
+
+	return &apimodel.AssetTransferRequestParams{
+		ContractAddresses: contractAddresses,
+		FromBlock:         p.FromBlock,
+		ToBlock:           p.ToBlock,
+		FromAddress:       p.FromAddress,
+		ToAddress:         p.ToAddress,
+		PageKey:           p.PageKey,
+		Order:             p.Order,
+		MaxCount:          maxCountHex.String(),
+		Category:          []string{"erc1155", "erc721"},
+		ExcludeZeroValue:  true,
+		WithMetadata:      true,
+	}, nil
+}
+
 func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb3.ContractID, pageKey string) (*apimodel.GetNFTsResponse, error) {
 	blockchain := ""
 	network := ""
@@ -67,20 +104,16 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 	return &response, nil
 }
 
-func (a *AlchemyAPI) GetAssetTransfers(contractIDs []authgearweb3.ContractID, fromAddress string, toAddress string, fromBlock string, toBlock string, pageKey string, maxCount int64, order string) (*apimodel.AssetTransferResponse, error) {
+func (a *AlchemyAPI) GetAssetTransfers(params GetAssetTransferParams) (*apimodel.AssetTransferResponse, error) {
 	blockchain := ""
 	network := ""
-	contractAddresses := make([]string, 0, len(contractIDs))
-
-	for _, contractID := range contractIDs {
+	for _, contractID := range params.ContractIDs {
 		if blockchain == "" && network == "" {
 			blockchain = contractID.Blockchain
 			network = contractID.Network
 		} else if blockchain != contractID.Blockchain || network != contractID.Network {
 			return nil, fmt.Errorf("Invalid contract IDs, blockchain networks are not the same")
 		}
-
-		contractAddresses = append(contractAddresses, contractID.ContractAddress)
 	}
 
 	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
@@ -88,29 +121,15 @@ func (a *AlchemyAPI) GetAssetTransfers(contractIDs []authgearweb3.ContractID, fr
 		return nil, err
 	}
 
-	maxCountHex, err := hexstring.NewFromInt64(maxCount)
+	requestParams, err := params.ToRequestParams()
 	if err != nil {
-		return nil, fmt.Errorf("invalid maxCount: %w", err)
-	}
-
-	params := &apimodel.AssetTransferRequestParams{
-		ContractAddresses: contractAddresses,
-		FromBlock:         fromBlock,
-		ToBlock:           toBlock,
-		FromAddress:       fromAddress,
-		ToAddress:         toAddress,
-		PageKey:           pageKey,
-		Order:             order,
-		MaxCount:          maxCountHex.String(),
-		Category:          []string{"erc1155", "erc721"},
-		ExcludeZeroValue:  true,
-		WithMetadata:      true,
+		return nil, err
 	}
 
 	body := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"method":  "alchemy_getAssetTransfers",
-		"params":  params,
+		"params":  requestParams,
 	}
 
 	jsonBody, err := json.Marshal(body)

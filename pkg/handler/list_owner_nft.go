@@ -9,6 +9,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	dbmodel "github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
+	"github.com/authgear/authgear-nft-indexer/pkg/web3"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/util/hexstring"
@@ -41,7 +42,7 @@ type ListOwnerNFTHandlerNFTOwnershipMutator interface {
 
 type ListOwnerNFTHandlerAlchemyAPI interface {
 	GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb3.ContractID, pageKey string) (*apimodel.GetNFTsResponse, error)
-	GetAssetTransfers(contractIDs []authgearweb3.ContractID, fromAddress string, toAddress string, fromBlock string, toBlock string, pageKey string, maxCount int64, order string) (*apimodel.AssetTransferResponse, error)
+	GetAssetTransfers(params web3.GetAssetTransferParams) (*apimodel.AssetTransferResponse, error)
 }
 
 func NewListOwnerNFTHandlerLogger(lf *log.Factory) ListOwnerNFTHandlerLogger {
@@ -97,7 +98,15 @@ func (h *ListOwnerNFTAPIHandler) FetchAndInsertNFTTransfers(ownerID authgearweb3
 	transferFetchCount := 0
 	// Fetch transfers until no extra page or has reached the page limit
 	for ok := true; ok; ok = pageKey != "" && transferFetchCount <= 5 {
-		transfers, err := h.AlchemyAPI.GetAssetTransfers(contractIDsToEnquire, "", ownerID.ContractAddress, "0x0", "latest", pageKey, 1000, "desc")
+		transfers, err := h.AlchemyAPI.GetAssetTransfers(web3.GetAssetTransferParams{
+			ContractIDs: contractIDsToEnquire,
+			ToAddress:   ownerID.ContractAddress,
+			FromBlock:   "0x0",
+			ToBlock:     "latest",
+			PageKey:     pageKey,
+			MaxCount:    1000,
+			Order:       "desc",
+		})
 		if err != nil {
 			return err
 		}
