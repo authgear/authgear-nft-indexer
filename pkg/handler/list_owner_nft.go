@@ -154,8 +154,6 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		}
 	}
 
-	tokenIDs := urlValues["token_id"]
-
 	// Ensure there are at least one valid contract ID
 	if len(contracts) == 0 {
 		ownership := apimodel.NewNFTOwnership(*ownerID, []apimodel.NFT{})
@@ -180,9 +178,6 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	// Query ownership from database
 	ownershipQb := h.NFTOwnershipQuery.NewQueryBuilder()
 	ownershipQb = ownershipQb.WithContracts(contracts).WithOwner(ownerID)
-	if len(tokenIDs) != 0 {
-		ownershipQb = ownershipQb.WithTokenIDs(tokenIDs)
-	}
 	ownerships, err := h.NFTOwnershipQuery.ExecuteQuery(ownershipQb)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get user nft ownerships")

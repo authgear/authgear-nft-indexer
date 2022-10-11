@@ -22,19 +22,21 @@ func (b NFTOwnershipQueryBuilder) WithContracts(contracts []authgearweb3.Contrac
 		return b
 	}
 
-	blockchains := make([]string, len(contracts))
-	networks := make([]string, len(contracts))
-	contractAddresses := make([]string, len(contracts))
-
+	qb := b
 	for _, contract := range contracts {
-		blockchains = append(blockchains, contract.Blockchain)
-		networks = append(networks, contract.Network)
-		contractAddresses = append(contractAddresses, contract.Address)
+		tokenIDs := contract.Query["token_ids"]
+		qb = NFTOwnershipQueryBuilder{
+			b.WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				s := sq.Where("blockchain = ? AND network = ? AND contract_address = ?", contract.Blockchain, contract.Network, contract.Address)
+				if len(tokenIDs) > 0 {
+					s = s.Where("token_id IN (?)", bun.In((tokenIDs)))
+				}
+				return s
+			}),
+		}
 	}
 
-	return NFTOwnershipQueryBuilder{
-		b.Where("blockchain IN (?) AND network IN (?) AND contract_address IN (?)", bun.In(blockchains), bun.In(networks), bun.In(contractAddresses)),
-	}
+	return qb
 }
 
 func (b NFTOwnershipQueryBuilder) WithTokenIDs(tokenIDs []string) NFTOwnershipQueryBuilder {
