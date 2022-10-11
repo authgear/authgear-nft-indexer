@@ -51,20 +51,16 @@ func (q *NFTOwnershipMutator) InsertNFTOwnerships(ownerships []database.NFTOwner
 	}
 
 	err := q.Session.RunInTx(q.Ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-
-		// Insert individually to prevent conflict within the values
-		for i := range ownerships {
-			_, err := tx.NewInsert().
-				Model(&ownerships[i]).
-				On("CONFLICT (blockchain, network, contract_address, token_id) DO UPDATE").
-				Set("txn_hash = EXCLUDED.txn_hash, block_number = EXCLUDED.block_number, block_timestamp = EXCLUDED.block_timestamp").
-				Returning("*").
-				Exec(ctx)
-			if err != nil {
-				return err
-			}
-		}
 		_, err := tx.NewInsert().
+			Model(&ownerships).
+			On("CONFLICT (blockchain, network, contract_address, token_id) DO NOTHING").
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.NewInsert().
 			Model(&uniqueOwners).
 			On("CONFLICT (blockchain, network, address) DO UPDATE").
 			Set("last_synced_at = EXCLUDED.last_synced_at").
