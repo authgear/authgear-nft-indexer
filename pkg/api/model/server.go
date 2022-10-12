@@ -43,7 +43,8 @@ type Contract struct {
 }
 
 type TransactionIdentifier struct {
-	Hash string `json:"hash"`
+	Hash  string `json:"hash"`
+	Index int    `json:"index"`
 }
 
 type BlockIdentifier struct {

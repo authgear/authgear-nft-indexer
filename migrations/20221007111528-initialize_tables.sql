@@ -36,6 +36,7 @@ CREATE TABLE eth_nft_ownership
 	block_number bigint NOT NULL,
 	owner_address text NOT NULL,
 	txn_hash text NOT NULL,
+	txn_index integer NOT NULL,
 	block_timestamp timestamp without time zone NOT NULL,
 	created_at    timestamp without time zone NOT NULL,
 	updated_at    timestamp without time zone NOT NULL

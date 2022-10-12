@@ -14,15 +14,16 @@ type NFTOwnership struct {
 	bun.BaseModel `bun:"table:eth_nft_ownership"`
 	Base
 
-	Blockchain      string      `bun:"blockchain,notnull"`
-	Network         string      `bun:"network,notnull"`
-	ContractAddress string      `bun:"contract_address,notnull"`
-	TokenID         string      `bun:"token_id,notnull"`
-	Balance         string      `bun:"balance,notnull"`
-	BlockNumber     *bunbig.Int `bun:"block_number,notnull"`
-	OwnerAddress    string      `bun:"owner_address,notnull"`
-	TransactionHash string      `bun:"txn_hash,notnull"`
-	BlockTimestamp  time.Time   `bun:"block_timestamp,notnull"`
+	Blockchain       string      `bun:"blockchain,notnull"`
+	Network          string      `bun:"network,notnull"`
+	ContractAddress  string      `bun:"contract_address,notnull"`
+	TokenID          string      `bun:"token_id,notnull"`
+	Balance          string      `bun:"balance,notnull"`
+	BlockNumber      *bunbig.Int `bun:"block_number,notnull"`
+	OwnerAddress     string      `bun:"owner_address,notnull"`
+	TransactionHash  string      `bun:"txn_hash,notnull"`
+	TransactionIndex int         `bun:"txn_index,notnull"`
+	BlockTimestamp   time.Time   `bun:"block_timestamp,notnull"`
 }
 
 func (c NFTOwnership) ContractID() (*authgearweb3.ContractID, error) {
@@ -33,7 +34,8 @@ func (c NFTOwnership) ToAPIToken() apimodel.Token {
 	return apimodel.Token{
 		TokenID: c.TokenID,
 		TransactionIdentifier: apimodel.TransactionIdentifier{
-			Hash: c.TransactionHash,
+			Hash:  c.TransactionHash,
+			Index: c.TransactionIndex,
 		},
 		BlockIdentifier: apimodel.BlockIdentifier{
 			Index:     *c.BlockNumber.ToMathBig(),
