@@ -52,10 +52,6 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 	request := p.Request
 	context := handler.ProvideRequestContext(request)
 	db := p.Database
-	nftOwnerQuery := &query.NFTOwnerQuery{
-		Ctx:     context,
-		Session: db,
-	}
 	nftCollectionQuery := query.NFTCollectionQuery{
 		Ctx:     context,
 		Session: db,
@@ -73,7 +69,6 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Logger:              listOwnerNFTHandlerLogger,
 		Config:              config,
 		AlchemyAPI:          alchemyAPI,
-		NFTOwnerQuery:       nftOwnerQuery,
 		NFTCollectionQuery:  nftCollectionQuery,
 		NFTOwnershipQuery:   nftOwnershipQuery,
 		NFTOwnershipMutator: nftOwnershipMutator,

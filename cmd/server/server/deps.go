@@ -13,7 +13,6 @@ import (
 
 var DependencySet = wire.NewSet(
 	query.DependencySet,
-	wire.Bind(new(handler.ListOwnerNFTHandlerNFTOwnerQuery), new(*query.NFTOwnerQuery)),
 	wire.Bind(new(handler.ProbeCollectionHandlerNFTCollectionProbeQuery), new(*query.NFTCollectionProbeQuery)),
 
 	mutator.DependencySet,
