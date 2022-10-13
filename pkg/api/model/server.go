@@ -15,7 +15,6 @@ type NFTCollection struct {
 	ContractAddress string    `json:"contract_address"`
 	TotalSupply     *big.Int  `json:"total_supply"`
 	Type            string    `json:"type"`
-	CreatedAt       time.Time `json:"created_at"`
 }
 
 type WatchCollectionRequestData struct {

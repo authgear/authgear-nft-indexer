@@ -59,7 +59,6 @@ func (c NFTCollection) ToAPIModel() apimodel.NFTCollection {
 		Network:         c.Network,
 		Name:            c.Name,
 		ContractAddress: c.ContractAddress,
-		CreatedAt:       c.CreatedAt,
 		TotalSupply:     totalSupply,
 		Type:            string(c.Type),
 	}
