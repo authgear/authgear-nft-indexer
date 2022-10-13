@@ -1,4 +1,4 @@
-package handler
+package service
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 	"github.com/authgear/authgear-server/pkg/util/duration"
 )
 
-func AntiSpamProbeCollectionRequestBucket(appID string) ratelimit.Bucket {
+func AntiSpamContractMetadataRequestBucket(appID string) ratelimit.Bucket {
 	return ratelimit.Bucket{
-		Key:         fmt.Sprintf("probe-collection-request-%s", appID),
-		Size:        60,
+		Key:         fmt.Sprintf("contract-metadata-request-%s", appID),
+		Size:        10,
 		ResetPeriod: duration.PerHour,
 	}
 }

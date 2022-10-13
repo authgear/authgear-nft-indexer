@@ -10,6 +10,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/handler"
 	"github.com/authgear/authgear-nft-indexer/pkg/mutator"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
+	"github.com/authgear/authgear-nft-indexer/pkg/service"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
 	"github.com/authgear/authgear-server/pkg/util/httputil"
 	"net/http"
@@ -99,13 +100,16 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 		Session: db,
 	}
 	limiter := p.RateLimiter
-	getCollectionMetadataAPIHandler := &handler.GetCollectionMetadataAPIHandler{
-		JSON:                 jsonResponseWriter,
-		Logger:               getCollectionMetadataHandlerLogger,
+	metadataService := &service.MetadataService{
 		AlchemyAPI:           alchemyAPI,
 		NFTCollectionQuery:   nftCollectionQuery,
 		NFTCollectionMutator: nftCollectionMutator,
 		RateLimiter:          limiter,
+	}
+	getCollectionMetadataAPIHandler := &handler.GetCollectionMetadataAPIHandler{
+		JSON:            jsonResponseWriter,
+		Logger:          getCollectionMetadataHandlerLogger,
+		MetadataService: metadataService,
 	}
 	return getCollectionMetadataAPIHandler
 }
