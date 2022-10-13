@@ -5,11 +5,8 @@ import (
 	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
-	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
-	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
-	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
@@ -27,28 +24,14 @@ func NewProbeCollectionHandlerLogger(lf *log.Factory) ProbeCollectionHandlerLogg
 	return ProbeCollectionHandlerLogger{lf.New("api-probe-collection")}
 }
 
-type ProbeCollectionHandlerAlchemyAPI interface {
-	GetOwnersForCollection(contractID authgearweb3.ContractID) (*alchemy.GetOwnersForCollectionResponse, error)
+type ProbeCollectionHandlerProbeService interface {
+	ProbeCollection(appID string, contractID authgearweb3.ContractID) (bool, error)
 }
 
-type ProbeCollectionHandlerRateLimiter interface {
-	TakeToken(bucket ratelimit.Bucket) error
-}
-
-type ProbeCollectionHandlerNFTCollectionProbeQuery interface {
-	QueryCollectionProbeByContractID(contractID authgearweb3.ContractID) (*database.NFTCollectionProbe, error)
-}
-
-type ProbeCollectionHandlerNFTCollectionProbeMutator interface {
-	InsertNFTCollectionProbe(contractID authgearweb3.ContractID, isLargeCollection bool) (*database.NFTCollectionProbe, error)
-}
 type ProbeCollectionAPIHandler struct {
-	JSON                      JSONResponseWriter
-	Logger                    ProbeCollectionHandlerLogger
-	AlchemyAPI                ProbeCollectionHandlerAlchemyAPI
-	RateLimiter               ProbeCollectionHandlerRateLimiter
-	NFTCollectionProbeQuery   ProbeCollectionHandlerNFTCollectionProbeQuery
-	NFTCollectionProbeMutator ProbeCollectionHandlerNFTCollectionProbeMutator
+	JSON         JSONResponseWriter
+	Logger       ProbeCollectionHandlerLogger
+	ProbeService ProbeCollectionHandlerProbeService
 }
 
 func (h *ProbeCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
@@ -81,42 +64,16 @@ func (h *ProbeCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		return
 	}
 
-	collectionProbe, err := h.NFTCollectionProbeQuery.QueryCollectionProbeByContractID(*contractID)
-	if err == nil && collectionProbe != nil {
-		h.JSON.WriteResponse(resp, &authgearapi.Response{
-			Result: &apimodel.ProbeCollectionResponse{
-				IsLargeCollection: collectionProbe.IsLargeCollection,
-			},
-		})
-		return
-	}
-
-	err = h.RateLimiter.TakeToken(AntiSpamProbeCollectionRequestBucket(body.AppID))
+	probe, err := h.ProbeService.ProbeCollection(body.AppID, *contractID)
 	if err != nil {
-		h.Logger.WithError(err).Error("unable to take token from rate limiter")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{
-			Error: apierrors.TooManyRequest.WithReason(string(apierrors.TooManyRequest)).New("rate limited"),
-		})
-		return
-	}
-
-	res, err := h.AlchemyAPI.GetOwnersForCollection(*contractID)
-	if err != nil {
-		h.Logger.WithError(err).Error("failed to probe collection")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to probe collection")})
-		return
-	}
-
-	dbProbe, err := h.NFTCollectionProbeMutator.InsertNFTCollectionProbe(*contractID, res.PageKey != nil)
-	if err != nil {
-		h.Logger.WithError(err).Error("failed to insert collection probe")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to insert collection probe")})
+		h.Logger.WithError(err).Error("failed to probe service")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to probe service")})
 		return
 	}
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
 		Result: &apimodel.ProbeCollectionResponse{
-			IsLargeCollection: dbProbe.IsLargeCollection,
+			IsLargeCollection: probe,
 		},
 	})
 
