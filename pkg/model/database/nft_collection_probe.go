@@ -5,7 +5,7 @@ import (
 )
 
 type NFTCollectionProbe struct {
-	bun.BaseModel `bun:"table:nft_collection_probe"`
+	bun.BaseModel `bun:"table:eth_nft_collection_probe"`
 
 	Blockchain        string `bun:"blockchain,notnull"`
 	Network           string `bun:"network,notnull"`

@@ -7,7 +7,7 @@ import (
 )
 
 type NFTOwner struct {
-	bun.BaseModel `bun:"table:nft_owner"`
+	bun.BaseModel `bun:"table:eth_nft_owner"`
 
 	Blockchain   string    `bun:"blockchain,notnull"`
 	Network      string    `bun:"network,notnull"`
