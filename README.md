@@ -19,14 +19,14 @@ asdf install
 make setup
 ```
 
-2. Edit `authgear-nft-indexer` for applicable configurations
+2. Edit `authgear-nft-indexer.yaml` for applicable configurations
 
 ## Database setup
 
 1. Start the db container
 
 ```
-docker compose up -d db
+docker compose up -d
 ```
 
 2. Apply database schema migrations:
@@ -34,7 +34,7 @@ docker compose up -d db
    make sure the db container is running
 
    ```sh
-   go run ./cmd/indexer database migrate up
+   go run ./cmd/server database migrate up
    ```
 
 To create new migration:
@@ -50,9 +50,9 @@ go run ./cmd/indexer database migrate new add user table
 docker compose up -d
 ```
 
-Then run the following command to start up the indexer worker
+Then run the following command to start up the server
 
 ```
 # in project root
-make start-worker
+make start
 ```
