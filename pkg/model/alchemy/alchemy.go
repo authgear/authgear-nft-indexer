@@ -13,18 +13,6 @@ import (
 	"github.com/uptrace/bun/extra/bunbig"
 )
 
-func NewContractTokenIDWithTokenID(blockchain string, network string, address string, tokenID string) (*authgearweb3.ContractID, error) {
-	tokenIDHex, err := hexstring.TrimmedParse(tokenID)
-	if err != nil {
-		return nil, err
-	}
-
-	query := url.Values{}
-	query.Set("token_ids", tokenIDHex.String())
-
-	return authgearweb3.NewContractID(blockchain, network, address, query)
-}
-
 type RawContract struct {
 	Value   string `json:"value"`
 	Address string `json:"address"`
@@ -146,21 +134,25 @@ type GetNFTsResponse struct {
 }
 
 func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3.ContractID, transfers []TokenTransfer, ownedNFTs []OwnedNFT) ([]database.NFTOwnership, error) {
-	contractTokenIDToBalance := make(map[string]string)
+	contractIDToTokenIDToBalance := make(map[string]map[string]string)
 	for _, ownedNFT := range ownedNFTs {
-		contractTokenID, err := NewContractTokenIDWithTokenID(ownerID.Blockchain, ownerID.Network, ownedNFT.Contract.Address, ownedNFT.ID.TokenID)
+		contractID, err := authgearweb3.NewContractID(ownerID.Blockchain, ownerID.Network, ownedNFT.Contract.Address, url.Values{})
 		if err != nil {
 			return []database.NFTOwnership{}, err
 		}
 
-		contractTokenIDURL, err := contractTokenID.URL()
+		contractIDURL, err := contractID.URL()
 		if err != nil {
 			return []database.NFTOwnership{}, err
 		}
-		contractTokenIDToBalance[contractTokenIDURL.String()] = ownedNFT.Balance
+
+		if _, ok := contractIDToTokenIDToBalance[contractIDURL.String()]; !ok {
+			contractIDToTokenIDToBalance[contractIDURL.String()] = make(map[string]string)
+		}
+		contractIDToTokenIDToBalance[contractIDURL.String()][ownedNFT.ID.TokenID] = ownedNFT.Balance
 	}
 
-	contractIDToOwnership := make(map[string]database.NFTOwnership, 0)
+	contractIDToTokenIDToOwnership := make(map[string]map[string]database.NFTOwnership, 0)
 	for _, transfer := range transfers {
 		blockNumber, err := hexstring.Parse(transfer.BlockNum)
 		if err != nil {
@@ -186,23 +178,18 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 			return []database.NFTOwnership{}, err
 		}
 
+		if _, ok := contractIDToTokenIDToOwnership[contractIDURL.String()]; !ok {
+			contractIDToTokenIDToOwnership[contractIDURL.String()] = make(map[string]database.NFTOwnership)
+		}
+
 		if transfer.ERC1155Metadata != nil {
 			for _, erc1155 := range *transfer.ERC1155Metadata {
-				contractTokenID, err := NewContractTokenIDWithTokenID(ownerID.Blockchain, ownerID.Network, transfer.RawContract.Address, erc1155.TokenID)
-				if err != nil {
-					return []database.NFTOwnership{}, err
-				}
-				contractTokenIDURL, err := contractTokenID.URL()
-				if err != nil {
-					return []database.NFTOwnership{}, err
-				}
-
-				balance := contractTokenIDToBalance[contractTokenIDURL.String()]
-				if _, ok := contractIDToOwnership[contractTokenIDURL.String()]; !ok {
-					contractIDToOwnership[contractTokenIDURL.String()] = database.NFTOwnership{
-						Blockchain:       contractTokenID.Blockchain,
-						Network:          contractTokenID.Network,
-						ContractAddress:  contractTokenID.Address,
+				balance := contractIDToTokenIDToBalance[contractIDURL.String()][erc1155.TokenID]
+				if _, ok := contractIDToTokenIDToOwnership[contractIDURL.String()][erc1155.TokenID]; !ok {
+					contractIDToTokenIDToOwnership[contractIDURL.String()][erc1155.TokenID] = database.NFTOwnership{
+						Blockchain:       contractID.Blockchain,
+						Network:          contractID.Network,
+						ContractAddress:  contractID.Address,
 						TokenID:          erc1155.TokenID,
 						Balance:          balance,
 						BlockNumber:      bunbig.FromMathBig(blockNumber.ToBigInt()),
@@ -217,20 +204,12 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 		}
 
 		// Transfer is ERC-721
-		contractTokenID, err := NewContractTokenIDWithTokenID(ownerID.Blockchain, ownerID.Network, transfer.RawContract.Address, transfer.TokenID)
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
-		contractTokenIDURL, err := contractTokenID.URL()
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
-		balance := contractTokenIDToBalance[contractTokenIDURL.String()]
-		if _, ok := contractIDToOwnership[contractIDURL.String()]; !ok {
-			contractIDToOwnership[contractIDURL.String()] = database.NFTOwnership{
-				Blockchain:       contractTokenID.Blockchain,
-				Network:          contractTokenID.Network,
-				ContractAddress:  contractTokenID.Address,
+		balance := contractIDToTokenIDToBalance[contractIDURL.String()][transfer.TokenID]
+		if _, ok := contractIDToTokenIDToOwnership[contractIDURL.String()][transfer.TokenID]; !ok {
+			contractIDToTokenIDToOwnership[contractIDURL.String()][transfer.TokenID] = database.NFTOwnership{
+				Blockchain:       contractID.Blockchain,
+				Network:          contractID.Network,
+				ContractAddress:  contractID.Address,
 				TokenID:          transfer.TokenID,
 				Balance:          balance,
 				BlockNumber:      bunbig.FromMathBig(blockNumber.ToBigInt()),
@@ -244,15 +223,38 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 
 	ownerships := make([]database.NFTOwnership, 0)
 	for _, contract := range contracts {
-		contractURL, err := contract.URL()
+		tokenIDs := contract.Query["token_ids"]
+		contractID, err := authgearweb3.NewContractID(contract.Blockchain, contract.Network, contract.Address, url.Values{})
+		if err != nil {
+			return []database.NFTOwnership{}, err
+		}
+		contractURL, err := contractID.URL()
 		if err != nil {
 			return nil, err
 		}
-		if ownership, ok := contractIDToOwnership[contractURL.String()]; ok {
-			ownerships = append(ownerships, ownership)
+
+		contractOwnerships, ownershipsOk := contractIDToTokenIDToOwnership[contractURL.String()]
+		// Handle ERC-1155
+		if len(tokenIDs) != 0 {
+			// Append either existing ownership or empty ownership for each tokenID
+			for _, tokenID := range tokenIDs {
+				erc1155ownership, ok := contractOwnerships[tokenID]
+				if !ownershipsOk || !ok {
+					ownerships = append(ownerships, database.NewEmptyNFTOwnership(contract, tokenID, ownerID))
+				}
+
+				if ok {
+					ownerships = append(ownerships, erc1155ownership)
+				}
+			}
+		} else if ownershipsOk {
+			for _, erc721ownership := range contractOwnerships {
+				ownerships = append(ownerships, erc721ownership)
+			}
 		} else {
-			ownerships = append(ownerships, database.NewEmptyNFTOwnership(contract, ownerID))
+			ownerships = append(ownerships, database.NewEmptyNFTOwnership(contract, "0x0", ownerID))
 		}
+
 	}
 
 	return ownerships, nil

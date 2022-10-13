@@ -65,14 +65,30 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Ctx:     context,
 		Session: db,
 	}
-	listOwnerNFTAPIHandler := &handler.ListOwnerNFTAPIHandler{
-		JSON:                jsonResponseWriter,
-		Logger:              listOwnerNFTHandlerLogger,
+	ownershipService := &service.OwnershipService{
 		Config:              config,
 		AlchemyAPI:          alchemyAPI,
 		NFTCollectionQuery:  nftCollectionQuery,
 		NFTOwnershipQuery:   nftOwnershipQuery,
 		NFTOwnershipMutator: nftOwnershipMutator,
+	}
+	nftCollectionMutator := &mutator.NFTCollectionMutator{
+		Ctx:     context,
+		Session: db,
+	}
+	limiter := p.RateLimiter
+	metadataService := &service.MetadataService{
+		AlchemyAPI:           alchemyAPI,
+		NFTCollectionQuery:   nftCollectionQuery,
+		NFTCollectionMutator: nftCollectionMutator,
+		RateLimiter:          limiter,
+	}
+	listOwnerNFTAPIHandler := &handler.ListOwnerNFTAPIHandler{
+		JSON:             jsonResponseWriter,
+		Logger:           listOwnerNFTHandlerLogger,
+		Config:           config,
+		OwnershipService: ownershipService,
+		MetadataService:  metadataService,
 	}
 	return listOwnerNFTAPIHandler
 }

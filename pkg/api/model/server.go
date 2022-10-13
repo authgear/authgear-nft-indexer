@@ -47,8 +47,8 @@ type TransactionIdentifier struct {
 }
 
 type BlockIdentifier struct {
-	Index     big.Int   `json:"index"`
-	Timestamp time.Time `json:"timestamp"`
+	Index     big.Int    `json:"index"`
+	Timestamp *time.Time `json:"timestamp"`
 }
 
 type Token struct {
@@ -96,4 +96,10 @@ type ProbeCollectionRequestData struct {
 
 type ProbeCollectionResponse struct {
 	IsLargeCollection bool `json:"is_large_collection"`
+}
+
+type ListOwnerNFTRequestData struct {
+	AppID        string   `json:"app_id"`
+	OwnerAddress string   `json:"owner_address"`
+	ContractIDs  []string `json:"contract_ids"`
 }

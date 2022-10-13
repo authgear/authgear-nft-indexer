@@ -20,14 +20,12 @@ var DependencySet = wire.NewSet(
 	mutator.DependencySet,
 	wire.Bind(new(service.MetadataServiceNFTCollectionMutator), new(*mutator.NFTCollectionMutator)),
 	wire.Bind(new(service.ProbeServiceNFTCollectionProbeMutator), new(*mutator.NFTCollectionProbeMutator)),
-
-	wire.Bind(new(handler.ListOwnerNFTHandlerNFTOwnershipMutator), new(*mutator.NFTOwnershipMutator)),
+	wire.Bind(new(service.OwnershipServiceNFTOwnershipMutator), new(*mutator.NFTOwnershipMutator)),
 
 	web3.DependencySet,
 	wire.Bind(new(service.MetadataServiceAlchemyAPI), new(*web3.AlchemyAPI)),
 	wire.Bind(new(service.ProbeServiceAlchemyAPI), new(*web3.AlchemyAPI)),
-
-	wire.Bind(new(handler.ListOwnerNFTHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
+	wire.Bind(new(service.OwnershipServiceAlchemyAPI), new(*web3.AlchemyAPI)),
 
 	ratelimit.DependencySet,
 	wire.Bind(new(service.MetadataServiceRateLimiter), new(*agratelimit.Limiter)),
@@ -35,7 +33,9 @@ var DependencySet = wire.NewSet(
 
 	service.DependencySet,
 	wire.Bind(new(handler.GetCollectionMetadataHandlerMetadataService), new(*service.MetadataService)),
+	wire.Bind(new(handler.ListOwnerNFTHandlerMetadataService), new(*service.MetadataService)),
 	wire.Bind(new(handler.ProbeCollectionHandlerProbeService), new(*service.ProbeService)),
+	wire.Bind(new(handler.ListOwnerNFTHandlerOwnershipService), new(*service.OwnershipService)),
 
 	handler.DependencySet,
 	httputil.DependencySet,
