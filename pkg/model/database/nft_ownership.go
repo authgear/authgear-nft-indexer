@@ -40,8 +40,7 @@ func (c NFTOwnership) ToAPIToken() apimodel.Token {
 	return apimodel.Token{
 		TokenID: c.TokenID,
 		TransactionIdentifier: apimodel.TransactionIdentifier{
-			Hash:  c.TransactionHash,
-			Index: c.TransactionIndex,
+			Hash: c.TransactionHash,
 		},
 		BlockIdentifier: apimodel.BlockIdentifier{
 			Index:     *c.BlockNumber.ToMathBig(),
