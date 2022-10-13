@@ -3,18 +3,18 @@ package model
 import (
 	"math/big"
 	"time"
+
+	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
 type NFTCollection struct {
-	ID              string    `json:"id"`
-	Blockchain      string    `json:"blockchain"`
-	Network         string    `json:"network"`
-	Name            string    `json:"name"`
-	BlockHeight     big.Int   `json:"block_height"`
-	ContractAddress string    `json:"contract_address"`
-	TotalSupply     *big.Int  `json:"total_supply"`
-	Type            string    `json:"type"`
-	CreatedAt       time.Time `json:"created_at"`
+	ID              string   `json:"id"`
+	Blockchain      string   `json:"blockchain"`
+	Network         string   `json:"network"`
+	Name            string   `json:"name"`
+	ContractAddress string   `json:"contract_address"`
+	TotalSupply     *big.Int `json:"total_supply"`
+	Type            string   `json:"type"`
 }
 
 type WatchCollectionRequestData struct {
@@ -38,10 +38,12 @@ type NetworkIdentifier struct {
 type Contract struct {
 	Name    string `json:"name"`
 	Address string `json:"address"`
+	Type    string `json:"type"`
 }
 
 type TransactionIdentifier struct {
-	Hash string `json:"hash"`
+	Hash  string `json:"hash"`
+	Index int    `json:"index"`
 }
 
 type BlockIdentifier struct {
@@ -50,14 +52,14 @@ type BlockIdentifier struct {
 }
 
 type Token struct {
-	TokenID               big.Int               `json:"token_id"`
+	TokenID               string                `json:"token_id"`
 	TransactionIdentifier TransactionIdentifier `json:"transaction_identifier"`
 	BlockIdentifier       BlockIdentifier       `json:"block_identifier"`
+	Balance               string                `json:"balance"`
 }
 
 type NFT struct {
 	Contract Contract `json:"contract"`
-	Balance  int      `json:"balance"`
 	Tokens   []Token  `json:"tokens"`
 }
 type NFTOwnership struct {
@@ -66,14 +68,28 @@ type NFTOwnership struct {
 	NFTs              []NFT             `json:"nfts"`
 }
 
-type GetContractMetadataContractMetadata struct {
-	Name        string  `json:"name"`
-	Symbol      string  `json:"symbol"`
-	TotalSupply *string `json:"total_supply"`
-	TokenType   string  `json:"token_type"`
+func NewNFTOwnership(ownerID authgearweb3.ContractID, nfts []NFT) NFTOwnership {
+	return NFTOwnership{
+		AccountIdentifier: AccountIdentifier{
+			Address: ownerID.Address,
+		},
+		NetworkIdentifier: NetworkIdentifier{
+			Blockchain: ownerID.Blockchain,
+			Network:    ownerID.Network,
+		},
+		NFTs: nfts,
+	}
 }
 
 type GetContractMetadataResponse struct {
-	Address          string                              `json:"address"`
-	ContractMetadata GetContractMetadataContractMetadata `json:"contract_metadata"`
+	Collections []NFTCollection `json:"collections"`
+}
+
+type ProbeCollectionResponse struct {
+	IsLargeCollection bool `json:"is_large_collection"`
+}
+
+type ProbeCollectionRequestData struct {
+	AppID      string `json:"app_id"`
+	ContractID string `json:"contract_id"`
 }

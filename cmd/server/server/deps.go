@@ -13,14 +13,22 @@ import (
 
 var DependencySet = wire.NewSet(
 	query.DependencySet,
+	wire.Bind(new(handler.ListOwnerNFTHandlerNFTOwnerQuery), new(*query.NFTOwnerQuery)),
+	wire.Bind(new(handler.ProbeCollectionHandlerNFTCollectionProbeQuery), new(*query.NFTCollectionProbeQuery)),
 
 	mutator.DependencySet,
+	wire.Bind(new(handler.ListOwnerNFTHandlerNFTOwnershipMutator), new(*mutator.NFTOwnershipMutator)),
+	wire.Bind(new(handler.GetCollectionMetadataNFTCollectionMutator), new(*mutator.NFTCollectionMutator)),
+	wire.Bind(new(handler.ProbeCollectionHandlerNFTCollectionProbeMutator), new(*mutator.NFTCollectionProbeMutator)),
 
 	web3.DependencySet,
 	wire.Bind(new(handler.GetCollectionMetadataHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
+	wire.Bind(new(handler.ProbeCollectionHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
+	wire.Bind(new(handler.ListOwnerNFTHandlerAlchemyAPI), new(*web3.AlchemyAPI)),
 
 	ratelimit.DependencySet,
-	wire.Bind(new(handler.GetCollectionMeatadataRateLimiter), new(*agratelimit.Limiter)),
+	wire.Bind(new(handler.GetCollectionMetadataRateLimiter), new(*agratelimit.Limiter)),
+	wire.Bind(new(handler.ProbeCollectionHandlerRateLimiter), new(*agratelimit.Limiter)),
 
 	handler.DependencySet,
 	httputil.DependencySet,

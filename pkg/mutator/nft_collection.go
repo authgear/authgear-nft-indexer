@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"math/big"
 
-	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
+	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/extra/bunbig"
@@ -16,13 +16,12 @@ type NFTCollectionMutator struct {
 	Session *bun.DB
 }
 
-func (q *NFTCollectionMutator) InsertNFTCollection(contractID authgearweb3.ContractID, contractName string, tokenType eth.NFTCollectionType, totalSupply *big.Int) (*eth.NFTCollection, error) {
-	collection := &eth.NFTCollection{
+func (q *NFTCollectionMutator) InsertNFTCollection(contractID authgearweb3.ContractID, contractName string, tokenType database.NFTCollectionType, totalSupply *big.Int) (*database.NFTCollection, error) {
+	collection := &database.NFTCollection{
 		Blockchain:      contractID.Blockchain,
 		Network:         contractID.Network,
-		ContractAddress: contractID.ContractAddress,
+		ContractAddress: contractID.Address,
 		Name:            contractName,
-		FromBlockHeight: bunbig.FromInt64(0),
 		TotalSupply:     bunbig.FromMathBig(totalSupply),
 		Type:            tokenType,
 	}
@@ -50,9 +49,9 @@ func (q *NFTCollectionMutator) InsertNFTCollection(contractID authgearweb3.Contr
 	return collection, nil
 }
 
-func (q *NFTCollectionMutator) DeleteNFTCollection(id string) (*eth.NFTCollection, error) {
+func (q *NFTCollectionMutator) DeleteNFTCollection(id string) (*database.NFTCollection, error) {
 
-	collection := &eth.NFTCollection{}
+	collection := &database.NFTCollection{}
 
 	err := q.Session.RunInTx(q.Ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		res, err := tx.NewDelete().

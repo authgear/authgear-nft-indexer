@@ -144,8 +144,8 @@ github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmV
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a/go.mod h1:DAHtR1m6lCRdSC2Tm3DSWRPvIPr6xNKyeHdqDQSQT+A=
-github.com/authgear/authgear-server v0.0.0-20220921102849-5a963ca0ef96 h1:uIRHaJZ0GlpP4QpFfOi/RPBtraTwzp3KFvYedOKukow=
-github.com/authgear/authgear-server v0.0.0-20220921102849-5a963ca0ef96/go.mod h1:6RxKgUWXiVMx+QJKF14f+KJ9Y2OqLOGw/yNa39kHwxc=
+github.com/authgear/authgear-server v0.0.0-20221011105753-0a6be8dc8bc0 h1:I1iYD+Tlg2mKQz5Yd1Pq9BEVA5xdZ1EaC8LPtX2ZefA=
+github.com/authgear/authgear-server v0.0.0-20221011105753-0a6be8dc8bc0/go.mod h1:6RxKgUWXiVMx+QJKF14f+KJ9Y2OqLOGw/yNa39kHwxc=
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.15.27/go.mod h1:mFuSZ37Z9YOHbQEwBWztmVzqXrEkub65tZoCYDt7FT0=
 github.com/aws/aws-sdk-go v1.19.18/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=

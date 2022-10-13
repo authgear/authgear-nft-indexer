@@ -3,12 +3,8 @@ GIT_HASH ?= git-$(shell git rev-parse --short=12 HEAD)
 
 LDFLAGS ?= "-X github.com/authgear/authgear-nft-indexer/pkg/version.Version=${GIT_HASH}"
 
-.PHONY: start-worker
-start-worker:
-	go run ./cmd/indexer start
-
-.PHONY: start-server
-start-server:
+.PHONY: start
+start:
 	go run ./cmd/server start
 
 .PHONY: setup

@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	"github.com/authgear/authgear-nft-indexer/pkg/model/eth"
+	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 	"github.com/uptrace/bun"
 )
@@ -29,34 +29,33 @@ func (b NFTCollectionQueryBuilder) WithContracts(contracts []authgearweb3.Contra
 	for _, contract := range contracts {
 		blockchains = append(blockchains, contract.Blockchain)
 		networks = append(networks, contract.Network)
-		contractAddresses = append(contractAddresses, contract.ContractAddress)
+		contractAddresses = append(contractAddresses, contract.Address)
 	}
 	return NFTCollectionQueryBuilder{
-		// We only support erc721 for now
-		b.Where("blockchain IN (?) AND network IN (?) AND contract_address IN (?) AND type = ?", bun.In(blockchains), bun.In(networks), bun.In(contractAddresses), eth.NFTCollectionTypeERC721),
+		b.Where("blockchain IN (?) AND network IN (?) AND contract_address IN (?)", bun.In(blockchains), bun.In(networks), bun.In(contractAddresses)),
 	}
 
 }
 
 func (q *NFTCollectionQuery) NewQueryBuilder() NFTCollectionQueryBuilder {
 	return NFTCollectionQueryBuilder{
-		q.Session.NewSelect().Model((*eth.NFTCollection)(nil)),
+		q.Session.NewSelect().Model((*database.NFTCollection)(nil)),
 	}
 }
 
-func (q *NFTCollectionQuery) ExecuteQuery(qb NFTCollectionQueryBuilder) ([]eth.NFTCollection, error) {
-	nftCollections := make([]eth.NFTCollection, 0)
+func (q *NFTCollectionQuery) ExecuteQuery(qb NFTCollectionQueryBuilder) ([]database.NFTCollection, error) {
+	nftCollections := make([]database.NFTCollection, 0)
 	query := qb.Order("created_at DESC")
 	err := query.Scan(q.Ctx, &nftCollections)
 	if err != nil {
-		return []eth.NFTCollection{}, err
+		return []database.NFTCollection{}, err
 	}
 
 	return nftCollections, nil
 }
 
-func (q *NFTCollectionQuery) QueryAllNFTCollections() ([]eth.NFTCollection, error) {
-	nftCollections := make([]eth.NFTCollection, 0)
+func (q *NFTCollectionQuery) QueryAllNFTCollections() ([]database.NFTCollection, error) {
+	nftCollections := make([]database.NFTCollection, 0)
 
 	err := q.Session.NewSelect().Model(&nftCollections).Scan(q.Ctx)
 	if err != nil {
