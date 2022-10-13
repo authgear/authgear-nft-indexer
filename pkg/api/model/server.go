@@ -8,13 +8,13 @@ import (
 )
 
 type NFTCollection struct {
-	ID              string    `json:"id"`
-	Blockchain      string    `json:"blockchain"`
-	Network         string    `json:"network"`
-	Name            string    `json:"name"`
-	ContractAddress string    `json:"contract_address"`
-	TotalSupply     *big.Int  `json:"total_supply"`
-	Type            string    `json:"type"`
+	ID              string   `json:"id"`
+	Blockchain      string   `json:"blockchain"`
+	Network         string   `json:"network"`
+	Name            string   `json:"name"`
+	ContractAddress string   `json:"contract_address"`
+	TotalSupply     *big.Int `json:"total_supply"`
+	Type            string   `json:"type"`
 }
 
 type WatchCollectionRequestData struct {
