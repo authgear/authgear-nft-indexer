@@ -200,7 +200,7 @@ func MakeNFTOwnerships(blockchain string, network string, transfers []TokenTrans
 					OwnerAddress:     transfer.To,
 					TransactionHash:  transfer.Hash,
 					TransactionIndex: uniqueID.TransactionIndex,
-					BlockTimestamp:   blockTime,
+					BlockTimestamp:   &blockTime,
 				})
 			}
 			continue
@@ -226,7 +226,7 @@ func MakeNFTOwnerships(blockchain string, network string, transfers []TokenTrans
 			OwnerAddress:     transfer.To,
 			TransactionHash:  transfer.Hash,
 			TransactionIndex: uniqueID.TransactionIndex,
-			BlockTimestamp:   blockTime,
+			BlockTimestamp:   &blockTime,
 		})
 	}
 

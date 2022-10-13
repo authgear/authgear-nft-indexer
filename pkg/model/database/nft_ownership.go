@@ -23,7 +23,7 @@ type NFTOwnership struct {
 	OwnerAddress     string      `bun:"owner_address,notnull"`
 	TransactionHash  string      `bun:"txn_hash,notnull"`
 	TransactionIndex int         `bun:"txn_index,notnull"`
-	BlockTimestamp   time.Time   `bun:"block_timestamp,notnull"`
+	BlockTimestamp   *time.Time  `bun:"block_timestamp"`
 }
 
 func (c NFTOwnership) ContractID() (*authgearweb3.ContractID, error) {
@@ -39,7 +39,7 @@ func (c NFTOwnership) ToAPIToken() apimodel.Token {
 		},
 		BlockIdentifier: apimodel.BlockIdentifier{
 			Index:     *c.BlockNumber.ToMathBig(),
-			Timestamp: c.BlockTimestamp,
+			Timestamp: *c.BlockTimestamp,
 		},
 		Balance: c.Balance,
 	}
