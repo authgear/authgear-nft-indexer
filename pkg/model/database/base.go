@@ -12,12 +12,16 @@ import (
 
 type Base struct {
 	CreatedAt time.Time `bun:"created_at,notnull"`
+}
+
+type BaseWithUpdateAt struct {
 	UpdatedAt time.Time `bun:"updated_at,notnull"`
+	Base
 }
 
 type BaseWithID struct {
 	ID string `bun:"id,notnull"`
-	Base
+	BaseWithUpdateAt
 }
 
 func NewTimestamp() time.Time {
@@ -33,9 +37,19 @@ func NewID() (string, error) {
 }
 
 var _ bun.BeforeAppendModelHook = (*Base)(nil)
+var _ bun.BeforeAppendModelHook = (*BaseWithUpdateAt)(nil)
 var _ bun.BeforeAppendModelHook = (*BaseWithID)(nil)
 
 func (base *Base) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	now := NewTimestamp()
+	switch query.(type) {
+	case *bun.InsertQuery:
+		base.CreatedAt = now
+	}
+	return nil
+}
+
+func (base *BaseWithUpdateAt) BeforeAppendModel(ctx context.Context, query bun.Query) error {
 	now := NewTimestamp()
 	switch query.(type) {
 	case *bun.InsertQuery:

@@ -30,6 +30,12 @@ func (c NFTOwnership) ContractID() (*authgearweb3.ContractID, error) {
 	return authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress, url.Values{})
 }
 
+func (c NFTOwnership) ContractTokenID() (*authgearweb3.ContractID, error) {
+	values := url.Values{}
+	values.Set("token_ids", c.TokenID)
+	return authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress, values)
+}
+
 func (c NFTOwnership) ToAPIToken() apimodel.Token {
 	return apimodel.Token{
 		TokenID: c.TokenID,
@@ -39,8 +45,27 @@ func (c NFTOwnership) ToAPIToken() apimodel.Token {
 		},
 		BlockIdentifier: apimodel.BlockIdentifier{
 			Index:     *c.BlockNumber.ToMathBig(),
-			Timestamp: *c.BlockTimestamp,
+			Timestamp: c.BlockTimestamp,
 		},
 		Balance: c.Balance,
+	}
+}
+
+func (c NFTOwnership) IsEmpty() bool {
+	return c.Balance == "0" || c.TokenID == "0x0" || c.BlockNumber == bunbig.FromInt64(0) || c.TransactionHash == "0x0" || c.TransactionIndex == 0 || c.BlockTimestamp == nil
+}
+
+func NewEmptyNFTOwnership(contractID authgearweb3.ContractID, tokenID string, ownerID authgearweb3.ContractID) NFTOwnership {
+	return NFTOwnership{
+		Blockchain:       contractID.Blockchain,
+		Network:          contractID.Network,
+		ContractAddress:  contractID.Address,
+		OwnerAddress:     ownerID.Address,
+		TokenID:          tokenID,
+		Balance:          "0",
+		BlockNumber:      bunbig.FromInt64(0),
+		TransactionHash:  "0x0",
+		TransactionIndex: 0,
+		BlockTimestamp:   nil,
 	}
 }
