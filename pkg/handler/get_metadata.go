@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
@@ -14,7 +15,7 @@ import (
 
 func ConfigureGetCollectionMetadataRoute(route httproute.Route) httproute.Route {
 	return route.
-		WithMethods("GET").
+		WithMethods("POST").
 		WithPathPattern("/metadata")
 }
 
@@ -35,17 +36,30 @@ type GetCollectionMetadataAPIHandler struct {
 }
 
 func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	query := req.URL.Query()
-	appID := query.Get("app_id")
-	if appID == "" {
+	var body apimodel.GetContractMetadataRequestData
+
+	defer req.Body.Close()
+	err := json.NewDecoder(req.Body).Decode(&body)
+	if err != nil {
+		h.Logger.WithError(err).Error("failed to decode request body")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to decode request body")})
+		return
+	}
+
+	if body.AppID == "" {
 		h.Logger.Error("missing app id")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing app id")})
 		return
 	}
-	urlValues := req.URL.Query()
+
+	if len(body.ContractIDs) == 0 {
+		h.Logger.Error("missing contract_id")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract_id")})
+		return
+	}
 
 	contracts := make([]authgearweb3.ContractID, 0)
-	for _, url := range urlValues["contract_id"] {
+	for _, url := range body.ContractIDs {
 		e, err := authgearweb3.ParseContractID(url)
 		if err != nil {
 			h.Logger.WithError(err).Error("failed to parse contract ID")
@@ -62,7 +76,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
-	metadatas, err := h.MetadataService.GetContractMetadata(appID, contracts)
+	metadatas, err := h.MetadataService.GetContractMetadata(body.AppID, contracts)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get contract metadata")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get contract metadata")})

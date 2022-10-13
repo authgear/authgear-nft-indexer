@@ -81,15 +81,19 @@ func NewNFTOwnership(ownerID authgearweb3.ContractID, nfts []NFT) NFTOwnership {
 	}
 }
 
+type GetContractMetadataRequestData struct {
+	AppID       string   `json:"app_id"`
+	ContractIDs []string `json:"contract_ids"`
+}
 type GetContractMetadataResponse struct {
 	Collections []NFTCollection `json:"collections"`
-}
-
-type ProbeCollectionResponse struct {
-	IsLargeCollection bool `json:"is_large_collection"`
 }
 
 type ProbeCollectionRequestData struct {
 	AppID      string `json:"app_id"`
 	ContractID string `json:"contract_id"`
+}
+
+type ProbeCollectionResponse struct {
+	IsLargeCollection bool `json:"is_large_collection"`
 }
