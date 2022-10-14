@@ -181,12 +181,16 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 			for _, erc1155 := range *transfer.ERC1155Metadata {
 				balance := contractIDToTokenIDToBalance[contractURL][erc1155.TokenID]
 				if _, ok := contractIDToTokenIDToOwnership[contractURL][erc1155.TokenID]; !ok {
+					tokenID, err := hexstring.TrimmedParse(erc1155.TokenID)
+					if err != nil {
+						return []database.NFTOwnership{}, err
+					}
 
 					contractIDToTokenIDToOwnership[contractURL][erc1155.TokenID] = database.NFTOwnership{
 						Blockchain:       contractID.Blockchain,
 						Network:          contractID.Network,
 						ContractAddress:  contractID.Address,
-						TokenID:          erc1155.TokenID,
+						TokenID:          tokenID.String(),
 						Balance:          balance,
 						BlockNumber:      bunbig.FromMathBig(blockNumber.ToBigInt()),
 						OwnerAddress:     transfer.To,
@@ -199,6 +203,11 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 			continue
 		}
 
+		tokenID, err := hexstring.TrimmedParse(transfer.TokenID)
+		if err != nil {
+			return []database.NFTOwnership{}, err
+		}
+
 		// Transfer is ERC-721
 		balance := contractIDToTokenIDToBalance[contractURL][transfer.TokenID]
 		if _, ok := contractIDToTokenIDToOwnership[contractURL][transfer.TokenID]; !ok {
@@ -206,7 +215,7 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 				Blockchain:       contractID.Blockchain,
 				Network:          contractID.Network,
 				ContractAddress:  contractID.Address,
-				TokenID:          transfer.TokenID,
+				TokenID:          tokenID.String(),
 				Balance:          balance,
 				BlockNumber:      bunbig.FromMathBig(blockNumber.ToBigInt()),
 				OwnerAddress:     transfer.To,
