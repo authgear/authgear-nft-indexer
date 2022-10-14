@@ -51,7 +51,7 @@ func (c NFTOwnership) ToAPIToken() apimodel.Token {
 }
 
 func (c NFTOwnership) IsEmpty() bool {
-	return c.Balance == "0" || c.TokenID == "0x0" || c.BlockNumber == bunbig.FromInt64(0) || c.TransactionHash == "0x0" || c.TransactionIndex == 0 || c.BlockTimestamp == nil
+	return c.TransactionHash == "0x0"
 }
 
 func NewEmptyNFTOwnership(contractID authgearweb3.ContractID, tokenID string, ownerID authgearweb3.ContractID) NFTOwnership {
