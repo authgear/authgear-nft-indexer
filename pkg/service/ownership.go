@@ -10,6 +10,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
+	"github.com/authgear/authgear-server/pkg/util/clock"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
@@ -23,6 +24,7 @@ type OwnershipServiceAlchemyAPI interface {
 }
 
 type OwnershipService struct {
+	Clock               clock.Clock
 	Config              config.Config
 	AlchemyAPI          OwnershipServiceAlchemyAPI
 	NFTCollectionQuery  query.NFTCollectionQuery
@@ -98,9 +100,12 @@ func (h *OwnershipService) FetchAndInsertNFTOwnerships(ownerID authgearweb3.Cont
 }
 
 func (h *OwnershipService) GetOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3.ContractID) ([]database.NFTOwnership, error) {
+	minimumFreshness := h.Clock.NowUTC()
+	minimumFreshness = minimumFreshness.Add(-time.Duration(h.Config.Server.CacheTTL) * time.Second)
+
 	// Query ownership from database
 	ownershipQb := h.NFTOwnershipQuery.NewQueryBuilder()
-	ownershipQb = ownershipQb.WithContracts(contracts).WithOwner(&ownerID).WithExpiry(time.Second * time.Duration(h.Config.Server.CacheTTL))
+	ownershipQb = ownershipQb.WithContracts(contracts).WithOwner(&ownerID).WithMinimumFreshness(minimumFreshness)
 	ownerships, err := h.NFTOwnershipQuery.ExecuteQuery(ownershipQb)
 	if err != nil {
 		return []database.NFTOwnership{}, err

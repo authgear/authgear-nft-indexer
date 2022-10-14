@@ -59,9 +59,9 @@ func (b NFTOwnershipQueryBuilder) WithOwner(ownerID *authgearweb3.ContractID) NF
 	}
 }
 
-func (b NFTOwnershipQueryBuilder) WithExpiry(duration time.Duration) NFTOwnershipQueryBuilder {
+func (b NFTOwnershipQueryBuilder) WithMinimumFreshness(t time.Time) NFTOwnershipQueryBuilder {
 	return NFTOwnershipQueryBuilder{
-		b.Where("(created_at + '? second') > NOW()", duration.Seconds()),
+		b.Where("created_at > ?", t),
 	}
 }
 

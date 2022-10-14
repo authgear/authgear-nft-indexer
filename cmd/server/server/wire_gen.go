@@ -12,6 +12,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
 	"github.com/authgear/authgear-nft-indexer/pkg/service"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
+	"github.com/authgear/authgear-server/pkg/util/clock"
 	"github.com/authgear/authgear-server/pkg/util/httputil"
 	"net/http"
 )
@@ -47,6 +48,7 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 	}
 	listOwnerNFTHandlerLogger := handler.NewListOwnerNFTHandlerLogger(factory)
 	config := p.Config
+	clock := _wireSystemClockValue
 	alchemyAPI := &web3.AlchemyAPI{
 		Config: config,
 	}
@@ -66,6 +68,7 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Session: db,
 	}
 	ownershipService := &service.OwnershipService{
+		Clock:               clock,
 		Config:              config,
 		AlchemyAPI:          alchemyAPI,
 		NFTCollectionQuery:  nftCollectionQuery,
@@ -90,6 +93,10 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 	}
 	return listOwnerNFTAPIHandler
 }
+
+var (
+	_wireSystemClockValue = clock.NewSystemClock()
+)
 
 func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler {
 	factory := p.LogFactory
