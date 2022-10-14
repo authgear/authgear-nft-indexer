@@ -13,23 +13,10 @@ import (
 	"github.com/uptrace/bun/extra/bunbig"
 )
 
-func NewContractTokenIDWithTokenID(blockchain string, network string, address string, tokenID string) (*authgearweb3.ContractID, error) {
-
-	tokenIDHex, err := hexstring.TrimmedParse(tokenID)
-	if err != nil {
-		return nil, err
-	}
-
-	query := url.Values{}
-	query.Set("token_ids", tokenIDHex.String())
-
-	return authgearweb3.NewContractID(blockchain, network, address, query)
-}
-
 type RawContract struct {
-	Value   string `json:"value"`
-	Address string `json:"address"`
-	Decimal string `json:"decimal"`
+	Value   string             `json:"value"`
+	Address authgearweb3.EIP55 `json:"address"`
+	Decimal string             `json:"decimal"`
 }
 
 type Metadata struct {
@@ -70,8 +57,8 @@ type TokenTransfer struct {
 	UniqueID        string             `json:"uniqueId"`
 	Token           string             `json:"token"`
 	BlockNum        string             `json:"blockNum"`
-	From            string             `json:"from"`
-	To              string             `json:"to"`
+	From            authgearweb3.EIP55 `json:"from"`
+	To              authgearweb3.EIP55 `json:"to"`
 	Value           string             `json:"value"`
 	ERC721TokenID   *string            `json:"erc721TokenId"`
 	ERC1155Metadata *[]ERC1155Metadata `json:"erc1155Metadata"`
@@ -83,17 +70,17 @@ type TokenTransfer struct {
 }
 
 type AssetTransferRequestParams struct {
-	FromBlock         string   `json:"fromBlock,omitempty"`
-	ToBlock           string   `json:"toBlock,omitempty"`
-	FromAddress       string   `json:"fromAddress,omitempty"`
-	ToAddress         string   `json:"toAddress,omitempty"`
-	ContractAddresses []string `json:"contractAddresses,omitempty"`
-	Category          []string `json:"category"`
-	Order             string   `json:"order"`
-	WithMetadata      bool     `json:"withMetadata,omitempty"`
-	ExcludeZeroValue  bool     `json:"excludeZeroValue,omitempty"`
-	MaxCount          string   `json:"maxCount,omitempty"`
-	PageKey           string   `json:"pageKey,omitempty"`
+	FromBlock         string               `json:"fromBlock,omitempty"`
+	ToBlock           string               `json:"toBlock,omitempty"`
+	FromAddress       authgearweb3.EIP55   `json:"fromAddress,omitempty"`
+	ToAddress         authgearweb3.EIP55   `json:"toAddress,omitempty"`
+	ContractAddresses []authgearweb3.EIP55 `json:"contractAddresses,omitempty"`
+	Category          []string             `json:"category"`
+	Order             string               `json:"order"`
+	WithMetadata      bool                 `json:"withMetadata,omitempty"`
+	ExcludeZeroValue  bool                 `json:"excludeZeroValue,omitempty"`
+	MaxCount          string               `json:"maxCount,omitempty"`
+	PageKey           string               `json:"pageKey,omitempty"`
 }
 
 type AssetTransferResult struct {
@@ -146,22 +133,23 @@ type GetNFTsResponse struct {
 	PageKey   *string    `json:"pageKey,omitempty"`
 }
 
-func MakeNFTOwnerships(blockchain string, network string, transfers []TokenTransfer, ownedNFTs []OwnedNFT) ([]database.NFTOwnership, error) {
-	contractTokenIDToBalance := make(map[string]string)
+func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3.ContractID, transfers []TokenTransfer, ownedNFTs []OwnedNFT) ([]database.NFTOwnership, error) {
+	contractIDToTokenIDToBalance := make(map[string]map[string]string)
 	for _, ownedNFT := range ownedNFTs {
-		contractTokenID, err := NewContractTokenIDWithTokenID(blockchain, network, ownedNFT.Contract.Address, ownedNFT.ID.TokenID)
+		contractID, err := authgearweb3.NewContractID(ownerID.Blockchain, ownerID.Network, ownedNFT.Contract.Address, url.Values{})
 		if err != nil {
 			return []database.NFTOwnership{}, err
 		}
 
-		contractTokenIDURL, err := contractTokenID.URL()
-		if err != nil {
-			return []database.NFTOwnership{}, err
+		contractURL := contractID.String()
+
+		if _, ok := contractIDToTokenIDToBalance[contractURL]; !ok {
+			contractIDToTokenIDToBalance[contractURL] = make(map[string]string)
 		}
-		contractTokenIDToBalance[contractTokenIDURL.String()] = ownedNFT.Balance
+		contractIDToTokenIDToBalance[contractURL][ownedNFT.ID.TokenID] = ownedNFT.Balance
 	}
 
-	ownerships := make([]database.NFTOwnership, 0)
+	contractIDToTokenIDToOwnership := make(map[string]map[string]database.NFTOwnership, 0)
 	for _, transfer := range transfers {
 		blockNumber, err := hexstring.Parse(transfer.BlockNum)
 		if err != nil {
@@ -178,56 +166,93 @@ func MakeNFTOwnerships(blockchain string, network string, transfers []TokenTrans
 			return []database.NFTOwnership{}, err
 		}
 
+		contractID, err := authgearweb3.NewContractID(ownerID.Blockchain, ownerID.Network, transfer.RawContract.Address.String(), url.Values{})
+		if err != nil {
+			return []database.NFTOwnership{}, err
+		}
+
+		contractURL := contractID.String()
+
+		if _, ok := contractIDToTokenIDToOwnership[contractURL]; !ok {
+			contractIDToTokenIDToOwnership[contractURL] = make(map[string]database.NFTOwnership)
+		}
+
 		if transfer.ERC1155Metadata != nil {
 			for _, erc1155 := range *transfer.ERC1155Metadata {
-				contractTokenID, err := NewContractTokenIDWithTokenID(blockchain, network, transfer.RawContract.Address, erc1155.TokenID)
-				if err != nil {
-					return []database.NFTOwnership{}, err
-				}
-				contractTokenIDURL, err := contractTokenID.URL()
-				if err != nil {
-					return []database.NFTOwnership{}, err
-				}
+				balance := contractIDToTokenIDToBalance[contractURL][erc1155.TokenID]
+				if _, ok := contractIDToTokenIDToOwnership[contractURL][erc1155.TokenID]; !ok {
+					tokenID, err := hexstring.TrimmedParse(erc1155.TokenID)
+					if err != nil {
+						return []database.NFTOwnership{}, err
+					}
 
-				balance := contractTokenIDToBalance[contractTokenIDURL.String()]
-				ownerships = append(ownerships, database.NFTOwnership{
-					Blockchain:       contractTokenID.Blockchain,
-					Network:          contractTokenID.Network,
-					ContractAddress:  contractTokenID.Address,
-					TokenID:          erc1155.TokenID,
-					Balance:          balance,
-					BlockNumber:      bunbig.FromMathBig(blockNumber.ToBigInt()),
-					OwnerAddress:     transfer.To,
-					TransactionHash:  transfer.Hash,
-					TransactionIndex: uniqueID.TransactionIndex,
-					BlockTimestamp:   blockTime,
-				})
+					contractIDToTokenIDToOwnership[contractURL][erc1155.TokenID] = database.NFTOwnership{
+						Blockchain:       contractID.Blockchain,
+						Network:          contractID.Network,
+						ContractAddress:  contractID.Address,
+						TokenID:          tokenID.String(),
+						Balance:          balance,
+						BlockNumber:      bunbig.FromMathBig(blockNumber.ToBigInt()),
+						OwnerAddress:     transfer.To,
+						TransactionHash:  transfer.Hash,
+						TransactionIndex: uniqueID.TransactionIndex,
+						BlockTimestamp:   &blockTime,
+					}
+				}
 			}
 			continue
 		}
 
+		tokenID, err := hexstring.TrimmedParse(transfer.TokenID)
+		if err != nil {
+			return []database.NFTOwnership{}, err
+		}
+
 		// Transfer is ERC-721
-		contractTokenID, err := NewContractTokenIDWithTokenID(blockchain, network, transfer.RawContract.Address, transfer.TokenID)
-		if err != nil {
-			return []database.NFTOwnership{}, err
+		balance := contractIDToTokenIDToBalance[contractURL][transfer.TokenID]
+		if _, ok := contractIDToTokenIDToOwnership[contractURL][transfer.TokenID]; !ok {
+			contractIDToTokenIDToOwnership[contractURL][transfer.TokenID] = database.NFTOwnership{
+				Blockchain:       contractID.Blockchain,
+				Network:          contractID.Network,
+				ContractAddress:  contractID.Address,
+				TokenID:          tokenID.String(),
+				Balance:          balance,
+				BlockNumber:      bunbig.FromMathBig(blockNumber.ToBigInt()),
+				OwnerAddress:     transfer.To,
+				TransactionHash:  transfer.Hash,
+				TransactionIndex: uniqueID.TransactionIndex,
+				BlockTimestamp:   &blockTime,
+			}
 		}
-		contractTokenIDURL, err := contractTokenID.URL()
-		if err != nil {
-			return []database.NFTOwnership{}, err
+	}
+
+	ownerships := make([]database.NFTOwnership, 0)
+	for _, contract := range contracts {
+		tokenIDs := contract.Query["token_ids"]
+		strippedContractID := contract.StripQuery().String()
+
+		contractOwnerships, ownershipsOk := contractIDToTokenIDToOwnership[strippedContractID]
+		// Handle ERC-1155
+		if len(tokenIDs) != 0 {
+			// Append either existing ownership or empty ownership for each tokenID
+			for _, tokenID := range tokenIDs {
+				erc1155ownership, ok := contractOwnerships[tokenID]
+				if !ownershipsOk || !ok {
+					ownerships = append(ownerships, database.NewEmptyNFTOwnership(contract, tokenID, ownerID))
+				}
+
+				if ok {
+					ownerships = append(ownerships, erc1155ownership)
+				}
+			}
+		} else if ownershipsOk {
+			for _, erc721ownership := range contractOwnerships {
+				ownerships = append(ownerships, erc721ownership)
+			}
+		} else {
+			ownerships = append(ownerships, database.NewEmptyNFTOwnership(contract, "0x0", ownerID))
 		}
-		balance := contractTokenIDToBalance[contractTokenIDURL.String()]
-		ownerships = append(ownerships, database.NFTOwnership{
-			Blockchain:       contractTokenID.Blockchain,
-			Network:          contractTokenID.Network,
-			ContractAddress:  contractTokenID.Address,
-			TokenID:          transfer.TokenID,
-			Balance:          balance,
-			BlockNumber:      bunbig.FromMathBig(blockNumber.ToBigInt()),
-			OwnerAddress:     transfer.To,
-			TransactionHash:  transfer.Hash,
-			TransactionIndex: uniqueID.TransactionIndex,
-			BlockTimestamp:   blockTime,
-		})
+
 	}
 
 	return ownerships, nil

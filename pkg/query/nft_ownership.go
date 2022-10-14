@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"time"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
@@ -58,6 +59,12 @@ func (b NFTOwnershipQueryBuilder) WithOwner(ownerID *authgearweb3.ContractID) NF
 	}
 }
 
+func (b NFTOwnershipQueryBuilder) WithMinimumFreshness(t time.Time) NFTOwnershipQueryBuilder {
+	return NFTOwnershipQueryBuilder{
+		b.Where("created_at > ?", t),
+	}
+}
+
 func (q *NFTOwnershipQuery) NewQueryBuilder() NFTOwnershipQueryBuilder {
 	return NFTOwnershipQueryBuilder{
 		q.Session.NewSelect().Model((*database.NFTOwnership)(nil)),
@@ -67,7 +74,7 @@ func (q *NFTOwnershipQuery) NewQueryBuilder() NFTOwnershipQueryBuilder {
 func (q *NFTOwnershipQuery) ExecuteQuery(qb NFTOwnershipQueryBuilder) ([]database.NFTOwnership, error) {
 	nftOwnerships := make([]database.NFTOwnership, 0)
 
-	query := qb.Order("token_id ASC")
+	query := qb.Order("created_at DESC")
 
 	err := query.Scan(q.Ctx, &nftOwnerships)
 	if err != nil {

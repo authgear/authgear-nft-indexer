@@ -8,26 +8,17 @@ import (
 )
 
 type NFTCollection struct {
-	ID              string   `json:"id"`
-	Blockchain      string   `json:"blockchain"`
-	Network         string   `json:"network"`
-	Name            string   `json:"name"`
-	ContractAddress string   `json:"contract_address"`
-	TotalSupply     *big.Int `json:"total_supply"`
-	Type            string   `json:"type"`
-}
-
-type WatchCollectionRequestData struct {
-	ContractID string `json:"contract_id"`
-	Name       string `json:"name,omitempty"`
-}
-
-type CollectionListResponse struct {
-	Items []NFTCollection `json:"items"`
+	ID              string             `json:"id"`
+	Blockchain      string             `json:"blockchain"`
+	Network         string             `json:"network"`
+	Name            string             `json:"name"`
+	ContractAddress authgearweb3.EIP55 `json:"contract_address"`
+	TotalSupply     *big.Int           `json:"total_supply"`
+	Type            string             `json:"type"`
 }
 
 type AccountIdentifier struct {
-	Address string `json:"address"`
+	Address authgearweb3.EIP55 `json:"address"`
 }
 
 type NetworkIdentifier struct {
@@ -36,19 +27,18 @@ type NetworkIdentifier struct {
 }
 
 type Contract struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Type    string `json:"type"`
+	Name    string             `json:"name"`
+	Address authgearweb3.EIP55 `json:"address"`
+	Type    string             `json:"type"`
 }
 
 type TransactionIdentifier struct {
-	Hash  string `json:"hash"`
-	Index int    `json:"index"`
+	Hash string `json:"hash"`
 }
 
 type BlockIdentifier struct {
-	Index     big.Int   `json:"index"`
-	Timestamp time.Time `json:"timestamp"`
+	Index     big.Int    `json:"index"`
+	Timestamp *time.Time `json:"timestamp"`
 }
 
 type Token struct {
@@ -81,15 +71,22 @@ func NewNFTOwnership(ownerID authgearweb3.ContractID, nfts []NFT) NFTOwnership {
 	}
 }
 
+type GetContractMetadataRequestData struct {
+	ContractIDs []authgearweb3.ContractID `json:"contract_ids"`
+}
 type GetContractMetadataResponse struct {
 	Collections []NFTCollection `json:"collections"`
+}
+
+type ProbeCollectionRequestData struct {
+	ContractID authgearweb3.ContractID `json:"contract_id"`
 }
 
 type ProbeCollectionResponse struct {
 	IsLargeCollection bool `json:"is_large_collection"`
 }
 
-type ProbeCollectionRequestData struct {
-	AppID      string `json:"app_id"`
-	ContractID string `json:"contract_id"`
+type ListOwnerNFTRequestData struct {
+	OwnerAddress authgearweb3.ContractID   `json:"owner_address"`
+	ContractIDs  []authgearweb3.ContractID `json:"contract_ids"`
 }

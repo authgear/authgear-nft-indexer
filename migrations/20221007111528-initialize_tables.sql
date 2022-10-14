@@ -23,6 +23,7 @@ CREATE TABLE eth_nft_collection
 	updated_at timestamp without time zone NOT NULL
 );
 
+CREATE INDEX eth_nft_collection_collection_idx ON eth_nft_collection (blockchain, network, contract_address, updated_at);
 CREATE UNIQUE INDEX eth_nft_collection_unq_collection_idx ON eth_nft_collection (blockchain, network, contract_address);
 
 CREATE TABLE eth_nft_ownership
@@ -36,26 +37,13 @@ CREATE TABLE eth_nft_ownership
 	owner_address text NOT NULL,
 	txn_hash text NOT NULL,
 	txn_index integer NOT NULL,
-	block_timestamp timestamp without time zone NOT NULL,
-	created_at timestamp without time zone NOT NULL,
-	updated_at timestamp without time zone NOT NULL
+	block_timestamp timestamp without time zone,
+	created_at timestamp without time zone NOT NULL
 );
 
-CREATE UNIQUE INDEX eth_nft_ownership_unq_owner_idx ON eth_nft_ownership (blockchain, network, contract_address, token_id);
-CREATE INDEX eth_nft_ownership_owned_idx ON eth_nft_ownership (blockchain, network, owner_address);
-
-CREATE TABLE eth_nft_owner
-(
-	blockchain text NOT NULL,
-	network text NOT NULL,
-	address text NOT NULL,
-	last_synced_at timestamp without time zone NOT NULL
-);
-
-CREATE UNIQUE INDEX eth_nft_owner_unq_owner_idx ON eth_nft_owner (blockchain, network, address);
+CREATE INDEX eth_nft_ownership_owned_idx ON eth_nft_ownership (blockchain, network, owner_address, created_at);
 
 -- +migrate Down
-DROP TABLE eth_nft_owner;
 DROP TABLE eth_nft_ownership;
 DROP TABLE eth_nft_collection;
 DROP TABLE eth_nft_collection_probe;

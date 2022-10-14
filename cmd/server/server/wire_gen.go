@@ -10,7 +10,9 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/handler"
 	"github.com/authgear/authgear-nft-indexer/pkg/mutator"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
+	"github.com/authgear/authgear-nft-indexer/pkg/service"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
+	"github.com/authgear/authgear-server/pkg/util/clock"
 	"github.com/authgear/authgear-server/pkg/util/httputil"
 	"net/http"
 )
@@ -46,16 +48,13 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 	}
 	listOwnerNFTHandlerLogger := handler.NewListOwnerNFTHandlerLogger(factory)
 	config := p.Config
+	clock := _wireSystemClockValue
 	alchemyAPI := &web3.AlchemyAPI{
 		Config: config,
 	}
 	request := p.Request
 	context := handler.ProvideRequestContext(request)
 	db := p.Database
-	nftOwnerQuery := &query.NFTOwnerQuery{
-		Ctx:     context,
-		Session: db,
-	}
 	nftCollectionQuery := query.NFTCollectionQuery{
 		Ctx:     context,
 		Session: db,
@@ -68,18 +67,38 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Ctx:     context,
 		Session: db,
 	}
-	listOwnerNFTAPIHandler := &handler.ListOwnerNFTAPIHandler{
-		JSON:                jsonResponseWriter,
-		Logger:              listOwnerNFTHandlerLogger,
+	ownershipService := &service.OwnershipService{
+		Clock:               clock,
 		Config:              config,
 		AlchemyAPI:          alchemyAPI,
-		NFTOwnerQuery:       nftOwnerQuery,
 		NFTCollectionQuery:  nftCollectionQuery,
 		NFTOwnershipQuery:   nftOwnershipQuery,
 		NFTOwnershipMutator: nftOwnershipMutator,
 	}
+	nftCollectionMutator := &mutator.NFTCollectionMutator{
+		Ctx:     context,
+		Session: db,
+	}
+	metadataService := &service.MetadataService{
+		Clock:                clock,
+		Config:               config,
+		AlchemyAPI:           alchemyAPI,
+		NFTCollectionQuery:   nftCollectionQuery,
+		NFTCollectionMutator: nftCollectionMutator,
+	}
+	listOwnerNFTAPIHandler := &handler.ListOwnerNFTAPIHandler{
+		JSON:             jsonResponseWriter,
+		Logger:           listOwnerNFTHandlerLogger,
+		Config:           config,
+		OwnershipService: ownershipService,
+		MetadataService:  metadataService,
+	}
 	return listOwnerNFTAPIHandler
 }
+
+var (
+	_wireSystemClockValue = clock.NewSystemClock()
+)
 
 func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler {
 	factory := p.LogFactory
@@ -88,6 +107,7 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 		Logger: jsonResponseWriterLogger,
 	}
 	getCollectionMetadataHandlerLogger := handler.NewGetCollectionMetadataHandlerLogger(factory)
+	clockClock := _wireSystemClockValue
 	config := p.Config
 	alchemyAPI := &web3.AlchemyAPI{
 		Config: config,
@@ -103,14 +123,17 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 		Ctx:     context,
 		Session: db,
 	}
-	limiter := p.RateLimiter
-	getCollectionMetadataAPIHandler := &handler.GetCollectionMetadataAPIHandler{
-		JSON:                 jsonResponseWriter,
-		Logger:               getCollectionMetadataHandlerLogger,
+	metadataService := &service.MetadataService{
+		Clock:                clockClock,
+		Config:               config,
 		AlchemyAPI:           alchemyAPI,
 		NFTCollectionQuery:   nftCollectionQuery,
 		NFTCollectionMutator: nftCollectionMutator,
-		RateLimiter:          limiter,
+	}
+	getCollectionMetadataAPIHandler := &handler.GetCollectionMetadataAPIHandler{
+		JSON:            jsonResponseWriter,
+		Logger:          getCollectionMetadataHandlerLogger,
+		MetadataService: metadataService,
 	}
 	return getCollectionMetadataAPIHandler
 }
@@ -126,7 +149,6 @@ func NewProbeCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 	alchemyAPI := &web3.AlchemyAPI{
 		Config: config,
 	}
-	limiter := p.RateLimiter
 	request := p.Request
 	context := handler.ProvideRequestContext(request)
 	db := p.Database
@@ -138,13 +160,15 @@ func NewProbeCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 		Ctx:     context,
 		Session: db,
 	}
-	probeCollectionAPIHandler := &handler.ProbeCollectionAPIHandler{
-		JSON:                      jsonResponseWriter,
-		Logger:                    probeCollectionHandlerLogger,
+	probeService := &service.ProbeService{
 		AlchemyAPI:                alchemyAPI,
-		RateLimiter:               limiter,
 		NFTCollectionProbeQuery:   nftCollectionProbeQuery,
 		NFTCollectionProbeMutator: nftCollectionProbeMutator,
+	}
+	probeCollectionAPIHandler := &handler.ProbeCollectionAPIHandler{
+		JSON:         jsonResponseWriter,
+		Logger:       probeCollectionHandlerLogger,
+		ProbeService: probeService,
 	}
 	return probeCollectionAPIHandler
 }

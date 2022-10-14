@@ -16,7 +16,6 @@ var DependencySet = wire.NewSet(
 		"Config",
 		"LogFactory",
 		"Database",
-		"RateLimiter",
 		"Request",
 	),
 	wire.Struct(new(HealthCheckAPIHandler), "*"),
