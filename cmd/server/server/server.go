@@ -3,9 +3,6 @@ package server
 import (
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/database"
-	agconfig "github.com/authgear/authgear-server/pkg/lib/config"
-	"github.com/authgear/authgear-server/pkg/lib/infra/redis"
-	"github.com/authgear/authgear-server/pkg/lib/infra/redis/appredis"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	"github.com/authgear/authgear-server/pkg/util/server"
 )
@@ -26,29 +23,6 @@ func (c *Controller) Start() {
 	lf := log.NewFactory(log.LevelInfo)
 	c.logger = lf.New("server")
 
-	redisPool := redis.NewPool()
-	redisHub := redis.NewHub(redisPool, lf)
-
-	redisURL, err := c.Config.Redis.RedisURL()
-	if err != nil {
-		panic(err)
-	}
-
-	redis := appredis.NewHandle(
-		redisPool,
-		redisHub,
-		&agconfig.RedisEnvironmentConfig{
-			MaxOpenConnection:     c.Config.Redis.MaxOpenConnection,
-			MaxIdleConnection:     c.Config.Redis.MaxIdleConnection,
-			MaxConnectionLifetime: agconfig.DurationSeconds(c.Config.Redis.MaxConnectionLifeTime),
-			IdleConnectionTimeout: agconfig.DurationSeconds(c.Config.Redis.IdleConnectionTimeout),
-		},
-		&agconfig.RedisCredentials{
-			RedisURL: redisURL.String(),
-		},
-		lf,
-	)
-
 	server.Start(c.logger, []server.Spec{
 		{
 			Name:          "Indexer API Server",
@@ -56,7 +30,6 @@ func (c *Controller) Start() {
 			Handler: NewRouter(
 				c.Config,
 				database,
-				redis,
 				lf,
 			),
 		},
