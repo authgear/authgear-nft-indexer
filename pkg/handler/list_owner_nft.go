@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"net/url"
 
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
@@ -107,40 +106,15 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	// Check if the input contract IDs have token ids if they are erc1155
 	contractIDToCollection := make(map[string]database.NFTCollection)
 	for _, collection := range collections {
-		contractID, err := collection.ContractID()
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to contract ID of collection")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to contract ID of collection")})
-			return
-		}
-
-		contractURL, err := contractID.URL()
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to contract ID of collection")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to contract ID of collection")})
-			return
-		}
-
-		contractIDToCollection[contractURL.String()] = collection
+		contractID := collection.ContractID().String()
+		contractIDToCollection[contractID] = collection
 	}
 
 	for _, contract := range contracts {
 		tokenIDs := contract.Query["token_ids"]
-		contractID, err := authgearweb3.NewContractID(contract.Blockchain, contract.Network, contract.Address, url.Values{})
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to contract ID of collection")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to contract ID of collection")})
-			return
-		}
+		strippedContractID := contract.StripQuery().String()
 
-		contractURL, err := contractID.URL()
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to contract ID of collection")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to contract ID of collection")})
-			return
-		}
-
-		collection := contractIDToCollection[contractURL.String()]
+		collection := contractIDToCollection[strippedContractID]
 
 		if collection.Type == database.NFTCollectionTypeERC1155 && len(tokenIDs) == 0 {
 			h.Logger.Error("erc1155 contract address is specified but token ids are not provided")

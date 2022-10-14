@@ -35,16 +35,20 @@ type NFTCollection struct {
 	bun.BaseModel `bun:"table:eth_nft_collection"`
 	BaseWithID
 
-	Blockchain      string            `bun:"blockchain,notnull"`
-	Network         string            `bun:"network,notnull"`
-	ContractAddress string            `bun:"contract_address,notnull"`
-	Name            string            `bun:"name,notnull"`
-	TotalSupply     *bunbig.Int       `bun:"total_supply"`
-	Type            NFTCollectionType `bun:"type,notnull"`
+	Blockchain      string             `bun:"blockchain,notnull"`
+	Network         string             `bun:"network,notnull"`
+	ContractAddress authgearweb3.EIP55 `bun:"contract_address,notnull"`
+	Name            string             `bun:"name,notnull"`
+	TotalSupply     *bunbig.Int        `bun:"total_supply"`
+	Type            NFTCollectionType  `bun:"type,notnull"`
 }
 
-func (c NFTCollection) ContractID() (*authgearweb3.ContractID, error) {
-	return authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress, url.Values{})
+func (c NFTCollection) ContractID() *authgearweb3.ContractID {
+	cid, err := authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress.String(), url.Values{})
+	if err != nil {
+		panic(err)
+	}
+	return cid
 }
 
 func (c NFTCollection) ToAPIModel() apimodel.NFTCollection {

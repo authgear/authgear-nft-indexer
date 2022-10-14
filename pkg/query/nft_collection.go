@@ -24,7 +24,7 @@ func (b NFTCollectionQueryBuilder) WithContracts(contracts []authgearweb3.Contra
 
 	blockchains := make([]string, len(contracts))
 	networks := make([]string, len(contracts))
-	contractAddresses := make([]string, len(contracts))
+	contractAddresses := make([]authgearweb3.EIP55, len(contracts))
 
 	for _, contract := range contracts {
 		blockchains = append(blockchains, contract.Blockchain)

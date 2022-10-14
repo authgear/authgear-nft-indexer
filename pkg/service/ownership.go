@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/url"
 	"time"
 
@@ -40,7 +39,7 @@ func (h *OwnershipService) FetchAndInsertNFTOwnerships(ownerID authgearweb3.Cont
 
 	// Fetch user nfts until no extra page or has reached the page limit
 	for ok := true; ok; ok = pageKey != "" && nftFetchCount <= h.Config.Server.MaxNFTPages {
-		nfts, err := h.AlchemyAPI.GetOwnerNFTs(ownerID.Address, contracts, pageKey)
+		nfts, err := h.AlchemyAPI.GetOwnerNFTs(ownerID.Address.String(), contracts, pageKey)
 		if err != nil {
 			return []database.NFTOwnership{}, err
 		}
@@ -115,36 +114,21 @@ func (h *OwnershipService) GetOwnerships(ownerID authgearweb3.ContractID, contra
 	contractsToFetch := make([]authgearweb3.ContractID, 0)
 	contractIDToOwnerships := make(map[string][]database.NFTOwnership)
 	for _, ownership := range ownerships {
-		contractID, err := ownership.ContractID()
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
+		contractID := ownership.ContractID().String()
 
-		contractURL, err := contractID.URL()
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
-
-		if _, ok := contractIDToOwnerships[contractURL.String()]; ok {
-			contractIDToOwnerships[contractURL.String()] = append(contractIDToOwnerships[contractURL.String()], ownership)
+		if _, ok := contractIDToOwnerships[contractID]; ok {
+			contractIDToOwnerships[contractID] = append(contractIDToOwnerships[contractID], ownership)
 		} else {
-			contractIDToOwnerships[contractURL.String()] = []database.NFTOwnership{ownership}
+			contractIDToOwnerships[contractID] = []database.NFTOwnership{ownership}
 		}
 	}
 
 	for _, contract := range contracts {
 		tokenIDs := contract.Query["token_ids"]
-		contractID, err := authgearweb3.NewContractID(contract.Blockchain, contract.Network, contract.Address, url.Values{})
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
-		contractURL, err := contractID.URL()
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
 
-		ownerships, ok := contractIDToOwnerships[contractURL.String()]
-		fmt.Println(ownerships, ok)
+		strippedContractID := contract.StripQuery().String()
+
+		ownerships, ok := contractIDToOwnerships[strippedContractID]
 		if !ok || (len(tokenIDs) > 0 && len(ownerships) != len(tokenIDs)) {
 			contractsToFetch = append(contractsToFetch, contract)
 		}
@@ -158,36 +142,21 @@ func (h *OwnershipService) GetOwnerships(ownerID authgearweb3.ContractID, contra
 		}
 
 		for _, ownership := range updatedOwnerships {
-			contractID, err := ownership.ContractID()
-			if err != nil {
-				return []database.NFTOwnership{}, err
-			}
+			contractID := ownership.ContractID().String()
 
-			contractURL, err := contractID.URL()
-			if err != nil {
-				return []database.NFTOwnership{}, err
-			}
-
-			if _, ok := contractIDToOwnerships[contractURL.String()]; ok {
-				contractIDToOwnerships[contractURL.String()] = append(contractIDToOwnerships[contractURL.String()], ownership)
+			if _, ok := contractIDToOwnerships[contractID]; ok {
+				contractIDToOwnerships[contractID] = append(contractIDToOwnerships[contractID], ownership)
 			} else {
-				contractIDToOwnerships[contractURL.String()] = []database.NFTOwnership{ownership}
+				contractIDToOwnerships[contractID] = []database.NFTOwnership{ownership}
 			}
 		}
 	}
 
 	result := make([]database.NFTOwnership, 0)
 	for _, contract := range contracts {
-		contractID, err := authgearweb3.NewContractID(contract.Blockchain, contract.Network, contract.Address, url.Values{})
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
-		contractURL, err := contractID.URL()
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
+		contractID := contract.StripQuery().String()
 
-		ownerships := contractIDToOwnerships[contractURL.String()]
+		ownerships := contractIDToOwnerships[contractID]
 		for _, ownership := range ownerships {
 			if !ownership.IsEmpty() {
 				result = append(result, ownership)

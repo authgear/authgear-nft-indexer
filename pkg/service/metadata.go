@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"math/big"
-	"net/url"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
@@ -35,32 +34,16 @@ func (m *MetadataService) GetContractMetadata(contracts []authgearweb3.ContractI
 
 	contractIDToCollectionMap := make(map[string]*database.NFTCollection)
 	for i, collection := range collections {
-		contractID, err := collection.ContractID()
-		if err != nil {
-			return []database.NFTCollection{}, err
-		}
+		contractID := collection.ContractID().String()
 
-		contractURL, err := contractID.URL()
-		if err != nil {
-			return []database.NFTCollection{}, err
-		}
-
-		contractIDToCollectionMap[contractURL.String()] = &collections[i]
+		contractIDToCollectionMap[contractID] = &collections[i]
 	}
 
 	res := make([]database.NFTCollection, 0, len(contracts))
 	for _, contract := range contracts {
-		contractID, err := authgearweb3.NewContractID(contract.Blockchain, contract.Network, contract.Address, url.Values{})
-		if err != nil {
-			return []database.NFTCollection{}, err
-		}
-		contractURL, err := contractID.URL()
-		if err != nil {
-			return []database.NFTCollection{}, err
-		}
-
+		strippedContractID := contract.StripQuery().String()
 		// If exists, append to result, otherwise get from alchemy
-		collection := contractIDToCollectionMap[contractURL.String()]
+		collection := contractIDToCollectionMap[strippedContractID]
 		if collection != nil {
 			res = append(res, *collection)
 			continue

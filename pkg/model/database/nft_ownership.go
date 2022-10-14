@@ -14,26 +14,34 @@ type NFTOwnership struct {
 	bun.BaseModel `bun:"table:eth_nft_ownership"`
 	Base
 
-	Blockchain       string      `bun:"blockchain,notnull"`
-	Network          string      `bun:"network,notnull"`
-	ContractAddress  string      `bun:"contract_address,notnull"`
-	TokenID          string      `bun:"token_id,notnull"`
-	Balance          string      `bun:"balance,notnull"`
-	BlockNumber      *bunbig.Int `bun:"block_number,notnull"`
-	OwnerAddress     string      `bun:"owner_address,notnull"`
-	TransactionHash  string      `bun:"txn_hash,notnull"`
-	TransactionIndex int         `bun:"txn_index,notnull"`
-	BlockTimestamp   *time.Time  `bun:"block_timestamp"`
+	Blockchain       string             `bun:"blockchain,notnull"`
+	Network          string             `bun:"network,notnull"`
+	ContractAddress  authgearweb3.EIP55 `bun:"contract_address,notnull"`
+	TokenID          string             `bun:"token_id,notnull"`
+	Balance          string             `bun:"balance,notnull"`
+	BlockNumber      *bunbig.Int        `bun:"block_number,notnull"`
+	OwnerAddress     authgearweb3.EIP55 `bun:"owner_address,notnull"`
+	TransactionHash  string             `bun:"txn_hash,notnull"`
+	TransactionIndex int                `bun:"txn_index,notnull"`
+	BlockTimestamp   *time.Time         `bun:"block_timestamp"`
 }
 
-func (c NFTOwnership) ContractID() (*authgearweb3.ContractID, error) {
-	return authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress, url.Values{})
+func (c NFTOwnership) ContractID() *authgearweb3.ContractID {
+	cid, err := authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress.String(), url.Values{})
+	if err != nil {
+		panic(err)
+	}
+	return cid
 }
 
-func (c NFTOwnership) ContractTokenID() (*authgearweb3.ContractID, error) {
+func (c NFTOwnership) ContractTokenID() *authgearweb3.ContractID {
 	values := url.Values{}
 	values.Set("token_ids", c.TokenID)
-	return authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress, values)
+	cid, err := authgearweb3.NewContractID(c.Blockchain, c.Network, c.ContractAddress.String(), url.Values{})
+	if err != nil {
+		panic(err)
+	}
+	return cid
 }
 
 func (c NFTOwnership) ToAPIToken() apimodel.Token {

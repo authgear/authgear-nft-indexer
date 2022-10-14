@@ -14,9 +14,9 @@ import (
 )
 
 type RawContract struct {
-	Value   string `json:"value"`
-	Address string `json:"address"`
-	Decimal string `json:"decimal"`
+	Value   string             `json:"value"`
+	Address authgearweb3.EIP55 `json:"address"`
+	Decimal string             `json:"decimal"`
 }
 
 type Metadata struct {
@@ -57,8 +57,8 @@ type TokenTransfer struct {
 	UniqueID        string             `json:"uniqueId"`
 	Token           string             `json:"token"`
 	BlockNum        string             `json:"blockNum"`
-	From            string             `json:"from"`
-	To              string             `json:"to"`
+	From            authgearweb3.EIP55 `json:"from"`
+	To              authgearweb3.EIP55 `json:"to"`
 	Value           string             `json:"value"`
 	ERC721TokenID   *string            `json:"erc721TokenId"`
 	ERC1155Metadata *[]ERC1155Metadata `json:"erc1155Metadata"`
@@ -70,17 +70,17 @@ type TokenTransfer struct {
 }
 
 type AssetTransferRequestParams struct {
-	FromBlock         string   `json:"fromBlock,omitempty"`
-	ToBlock           string   `json:"toBlock,omitempty"`
-	FromAddress       string   `json:"fromAddress,omitempty"`
-	ToAddress         string   `json:"toAddress,omitempty"`
-	ContractAddresses []string `json:"contractAddresses,omitempty"`
-	Category          []string `json:"category"`
-	Order             string   `json:"order"`
-	WithMetadata      bool     `json:"withMetadata,omitempty"`
-	ExcludeZeroValue  bool     `json:"excludeZeroValue,omitempty"`
-	MaxCount          string   `json:"maxCount,omitempty"`
-	PageKey           string   `json:"pageKey,omitempty"`
+	FromBlock         string               `json:"fromBlock,omitempty"`
+	ToBlock           string               `json:"toBlock,omitempty"`
+	FromAddress       authgearweb3.EIP55   `json:"fromAddress,omitempty"`
+	ToAddress         authgearweb3.EIP55   `json:"toAddress,omitempty"`
+	ContractAddresses []authgearweb3.EIP55 `json:"contractAddresses,omitempty"`
+	Category          []string             `json:"category"`
+	Order             string               `json:"order"`
+	WithMetadata      bool                 `json:"withMetadata,omitempty"`
+	ExcludeZeroValue  bool                 `json:"excludeZeroValue,omitempty"`
+	MaxCount          string               `json:"maxCount,omitempty"`
+	PageKey           string               `json:"pageKey,omitempty"`
 }
 
 type AssetTransferResult struct {
@@ -141,15 +141,12 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 			return []database.NFTOwnership{}, err
 		}
 
-		contractIDURL, err := contractID.URL()
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
+		contractURL := contractID.String()
 
-		if _, ok := contractIDToTokenIDToBalance[contractIDURL.String()]; !ok {
-			contractIDToTokenIDToBalance[contractIDURL.String()] = make(map[string]string)
+		if _, ok := contractIDToTokenIDToBalance[contractURL]; !ok {
+			contractIDToTokenIDToBalance[contractURL] = make(map[string]string)
 		}
-		contractIDToTokenIDToBalance[contractIDURL.String()][ownedNFT.ID.TokenID] = ownedNFT.Balance
+		contractIDToTokenIDToBalance[contractURL][ownedNFT.ID.TokenID] = ownedNFT.Balance
 	}
 
 	contractIDToTokenIDToOwnership := make(map[string]map[string]database.NFTOwnership, 0)
@@ -169,24 +166,23 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 			return []database.NFTOwnership{}, err
 		}
 
-		contractID, err := authgearweb3.NewContractID(ownerID.Blockchain, ownerID.Network, transfer.RawContract.Address, url.Values{})
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
-		contractIDURL, err := contractID.URL()
+		contractID, err := authgearweb3.NewContractID(ownerID.Blockchain, ownerID.Network, transfer.RawContract.Address.String(), url.Values{})
 		if err != nil {
 			return []database.NFTOwnership{}, err
 		}
 
-		if _, ok := contractIDToTokenIDToOwnership[contractIDURL.String()]; !ok {
-			contractIDToTokenIDToOwnership[contractIDURL.String()] = make(map[string]database.NFTOwnership)
+		contractURL := contractID.String()
+
+		if _, ok := contractIDToTokenIDToOwnership[contractURL]; !ok {
+			contractIDToTokenIDToOwnership[contractURL] = make(map[string]database.NFTOwnership)
 		}
 
 		if transfer.ERC1155Metadata != nil {
 			for _, erc1155 := range *transfer.ERC1155Metadata {
-				balance := contractIDToTokenIDToBalance[contractIDURL.String()][erc1155.TokenID]
-				if _, ok := contractIDToTokenIDToOwnership[contractIDURL.String()][erc1155.TokenID]; !ok {
-					contractIDToTokenIDToOwnership[contractIDURL.String()][erc1155.TokenID] = database.NFTOwnership{
+				balance := contractIDToTokenIDToBalance[contractURL][erc1155.TokenID]
+				if _, ok := contractIDToTokenIDToOwnership[contractURL][erc1155.TokenID]; !ok {
+
+					contractIDToTokenIDToOwnership[contractURL][erc1155.TokenID] = database.NFTOwnership{
 						Blockchain:       contractID.Blockchain,
 						Network:          contractID.Network,
 						ContractAddress:  contractID.Address,
@@ -204,9 +200,9 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 		}
 
 		// Transfer is ERC-721
-		balance := contractIDToTokenIDToBalance[contractIDURL.String()][transfer.TokenID]
-		if _, ok := contractIDToTokenIDToOwnership[contractIDURL.String()][transfer.TokenID]; !ok {
-			contractIDToTokenIDToOwnership[contractIDURL.String()][transfer.TokenID] = database.NFTOwnership{
+		balance := contractIDToTokenIDToBalance[contractURL][transfer.TokenID]
+		if _, ok := contractIDToTokenIDToOwnership[contractURL][transfer.TokenID]; !ok {
+			contractIDToTokenIDToOwnership[contractURL][transfer.TokenID] = database.NFTOwnership{
 				Blockchain:       contractID.Blockchain,
 				Network:          contractID.Network,
 				ContractAddress:  contractID.Address,
@@ -224,16 +220,9 @@ func MakeNFTOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3
 	ownerships := make([]database.NFTOwnership, 0)
 	for _, contract := range contracts {
 		tokenIDs := contract.Query["token_ids"]
-		contractID, err := authgearweb3.NewContractID(contract.Blockchain, contract.Network, contract.Address, url.Values{})
-		if err != nil {
-			return []database.NFTOwnership{}, err
-		}
-		contractURL, err := contractID.URL()
-		if err != nil {
-			return nil, err
-		}
+		strippedContractID := contract.StripQuery().String()
 
-		contractOwnerships, ownershipsOk := contractIDToTokenIDToOwnership[contractURL.String()]
+		contractOwnerships, ownershipsOk := contractIDToTokenIDToOwnership[strippedContractID]
 		// Handle ERC-1155
 		if len(tokenIDs) != 0 {
 			// Append either existing ownership or empty ownership for each tokenID

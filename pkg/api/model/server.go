@@ -8,13 +8,13 @@ import (
 )
 
 type NFTCollection struct {
-	ID              string   `json:"id"`
-	Blockchain      string   `json:"blockchain"`
-	Network         string   `json:"network"`
-	Name            string   `json:"name"`
-	ContractAddress string   `json:"contract_address"`
-	TotalSupply     *big.Int `json:"total_supply"`
-	Type            string   `json:"type"`
+	ID              string             `json:"id"`
+	Blockchain      string             `json:"blockchain"`
+	Network         string             `json:"network"`
+	Name            string             `json:"name"`
+	ContractAddress authgearweb3.EIP55 `json:"contract_address"`
+	TotalSupply     *big.Int           `json:"total_supply"`
+	Type            string             `json:"type"`
 }
 
 type WatchCollectionRequestData struct {
@@ -27,7 +27,7 @@ type CollectionListResponse struct {
 }
 
 type AccountIdentifier struct {
-	Address string `json:"address"`
+	Address authgearweb3.EIP55 `json:"address"`
 }
 
 type NetworkIdentifier struct {
@@ -36,9 +36,9 @@ type NetworkIdentifier struct {
 }
 
 type Contract struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Type    string `json:"type"`
+	Name    string             `json:"name"`
+	Address authgearweb3.EIP55 `json:"address"`
+	Type    string             `json:"type"`
 }
 
 type TransactionIdentifier struct {

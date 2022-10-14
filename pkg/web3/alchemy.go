@@ -19,8 +19,8 @@ type AlchemyAPI struct {
 
 type GetAssetTransferParams struct {
 	ContractIDs []authgearweb3.ContractID
-	FromAddress string
-	ToAddress   string
+	FromAddress authgearweb3.EIP55
+	ToAddress   authgearweb3.EIP55
 	FromBlock   string
 	ToBlock     string
 	PageKey     string
@@ -29,7 +29,7 @@ type GetAssetTransferParams struct {
 }
 
 func (p *GetAssetTransferParams) ToRequestParams() (*alchemy.AssetTransferRequestParams, error) {
-	contractAddresses := make([]string, 0, len(p.ContractIDs))
+	contractAddresses := make([]authgearweb3.EIP55, 0, len(p.ContractIDs))
 	for _, contractID := range p.ContractIDs {
 		contractAddresses = append(contractAddresses, contractID.Address)
 	}
@@ -67,7 +67,7 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 			return nil, fmt.Errorf("Invalid contract IDs, blockchain networks are not the same")
 		}
 
-		contractAddresses = append(contractAddresses, contractID.Address)
+		contractAddresses = append(contractAddresses, contractID.Address.String())
 	}
 
 	alchemyEndpoints, err := GetRequestEndpoints(a.Config.Alchemy, blockchain, network)
@@ -173,7 +173,7 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 	requestURL.Path = path.Join(requestURL.Path, "getContractMetadata")
 
 	requestQuery := requestURL.Query()
-	requestQuery.Set("contractAddress", contractID.Address)
+	requestQuery.Set("contractAddress", contractID.Address.String())
 
 	requestURL.RawQuery = requestQuery.Encode()
 
@@ -206,7 +206,7 @@ func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) 
 	requestURL.Path = path.Join(requestURL.Path, "getOwnersForCollection")
 
 	requestQuery := requestURL.Query()
-	requestQuery.Set("contractAddress", contractID.Address)
+	requestQuery.Set("contractAddress", contractID.Address.String())
 
 	requestURL.RawQuery = requestQuery.Encode()
 
