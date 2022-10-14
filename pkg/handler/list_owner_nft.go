@@ -52,44 +52,24 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		return
 	}
 
-	if body.OwnerAddress == "" {
-		h.Logger.Error("missing owner address")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing owner address")})
-		return
-	}
-
 	if len(body.ContractIDs) == 0 {
 		h.Logger.Error("missing contract id")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract_id")})
 		return
 	}
 
-	ownerID, err := authgearweb3.ParseContractID(body.OwnerAddress)
-	if err != nil {
-		h.Logger.WithError(err).Error("failed to parse owner address")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid owner address")})
-		return
-	}
-
+	ownerID := body.OwnerAddress
 	contracts := make([]authgearweb3.ContractID, 0)
-	for _, url := range body.ContractIDs {
-		e, err := authgearweb3.ParseContractID(url)
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to parse contract ID")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract ID")})
-			return
-		}
-
+	for _, e := range body.ContractIDs {
 		// Filter out contracts that are not in owner's network
 		if e.Blockchain == ownerID.Blockchain && e.Network == ownerID.Network {
-			contracts = append(contracts, *e)
+			contracts = append(contracts, e)
 		}
 	}
 
 	// Ensure there are at least one valid contract ID
 	if len(contracts) == 0 {
-		ownership := apimodel.NewNFTOwnership(*ownerID, []apimodel.NFT{})
-
+		ownership := apimodel.NewNFTOwnership(ownerID, []apimodel.NFT{})
 		h.JSON.WriteResponse(resp, &authgearapi.Response{
 			Result: &ownership,
 		})
@@ -123,7 +103,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		}
 	}
 
-	ownerships, err := h.OwnershipService.GetOwnerships(*ownerID, contracts)
+	ownerships, err := h.OwnershipService.GetOwnerships(ownerID, contracts)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get nft ownerships")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get nft ownerships")})
@@ -140,7 +120,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 
 	}
 
-	ownership := apimodel.NewNFTOwnership(*ownerID, nfts)
+	ownership := apimodel.NewNFTOwnership(ownerID, nfts)
 
 	h.JSON.WriteResponse(resp, &authgearapi.Response{
 		Result: &ownership,

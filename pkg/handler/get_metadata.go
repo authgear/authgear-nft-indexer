@@ -67,24 +67,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
-	if len(body.ContractIDs) == 0 {
-		h.Logger.Error("missing contract_id")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract_id")})
-		return
-	}
-
-	contracts := make([]authgearweb3.ContractID, 0)
-	for _, url := range body.ContractIDs {
-		e, err := authgearweb3.ParseContractID(url)
-		if err != nil {
-			h.Logger.WithError(err).Error("failed to parse contract ID")
-			h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract ID")})
-			return
-		}
-
-		contracts = append(contracts, *e)
-	}
-
+	contracts := body.ContractIDs
 	if len(contracts) == 0 {
 		h.Logger.Error("invalid contract ID")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract ID")})

@@ -66,20 +66,8 @@ func (h *ProbeCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		return
 	}
 
-	if body.ContractID == "" {
-		h.Logger.Error("missing contract_id")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract_id")})
-		return
-	}
-
-	contractID, err := authgearweb3.ParseContractID(body.ContractID)
-	if err != nil {
-		h.Logger.WithError(err).Error("failed to parse contract URL")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("invalid contract URL")})
-		return
-	}
-
-	probe, err := h.ProbeService.ProbeCollection(*contractID)
+	contractID := body.ContractID
+	probe, err := h.ProbeService.ProbeCollection(contractID)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to probe service")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to probe service")})
