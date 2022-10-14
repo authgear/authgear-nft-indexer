@@ -36,7 +36,8 @@ func (q *NFTCollectionMutator) InsertNFTCollection(contractID authgearweb3.Contr
 
 		_, err := tx.NewInsert().
 			Model(collection).
-			On("CONFLICT (blockchain, network, contract_address) DO NOTHING").
+			On("CONFLICT (blockchain, network, contract_address) DO UPDATE").
+			Set("total_supply = EXCLUDED.total_supply, updated_at = NOW()").
 			Returning("*").
 			Exec(ctx)
 		return err

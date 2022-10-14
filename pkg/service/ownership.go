@@ -100,7 +100,7 @@ func (h *OwnershipService) FetchAndInsertNFTOwnerships(ownerID authgearweb3.Cont
 
 func (h *OwnershipService) GetOwnerships(ownerID authgearweb3.ContractID, contracts []authgearweb3.ContractID) ([]database.NFTOwnership, error) {
 	minimumFreshness := h.Clock.NowUTC()
-	minimumFreshness = minimumFreshness.Add(-time.Duration(h.Config.Server.CacheTTL) * time.Second)
+	minimumFreshness = minimumFreshness.Add(-time.Duration(h.Config.Server.OwnershipCacheTTL) * time.Second)
 
 	// Query ownership from database
 	ownershipQb := h.NFTOwnershipQuery.NewQueryBuilder()

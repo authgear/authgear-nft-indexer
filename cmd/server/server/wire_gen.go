@@ -80,6 +80,8 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Session: db,
 	}
 	metadataService := &service.MetadataService{
+		Clock:                clock,
+		Config:               config,
 		AlchemyAPI:           alchemyAPI,
 		NFTCollectionQuery:   nftCollectionQuery,
 		NFTCollectionMutator: nftCollectionMutator,
@@ -105,6 +107,7 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 		Logger: jsonResponseWriterLogger,
 	}
 	getCollectionMetadataHandlerLogger := handler.NewGetCollectionMetadataHandlerLogger(factory)
+	clockClock := _wireSystemClockValue
 	config := p.Config
 	alchemyAPI := &web3.AlchemyAPI{
 		Config: config,
@@ -121,6 +124,8 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 		Session: db,
 	}
 	metadataService := &service.MetadataService{
+		Clock:                clockClock,
+		Config:               config,
 		AlchemyAPI:           alchemyAPI,
 		NFTCollectionQuery:   nftCollectionQuery,
 		NFTCollectionMutator: nftCollectionMutator,

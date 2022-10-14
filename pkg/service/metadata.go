@@ -3,10 +3,13 @@ package service
 import (
 	"fmt"
 	"math/big"
+	"time"
 
+	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
+	"github.com/authgear/authgear-server/pkg/util/clock"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
@@ -19,14 +22,19 @@ type MetadataServiceNFTCollectionMutator interface {
 }
 
 type MetadataService struct {
+	Clock                clock.Clock
+	Config               config.Config
 	AlchemyAPI           MetadataServiceAlchemyAPI
 	NFTCollectionQuery   query.NFTCollectionQuery
 	NFTCollectionMutator MetadataServiceNFTCollectionMutator
 }
 
 func (m *MetadataService) GetContractMetadata(contracts []authgearweb3.ContractID) ([]database.NFTCollection, error) {
+	minimumFreshness := m.Clock.NowUTC()
+	minimumFreshness = minimumFreshness.Add(-time.Duration(m.Config.Server.CollectionCacheTTL) * time.Second)
+
 	qb := m.NFTCollectionQuery.NewQueryBuilder()
-	qb = qb.WithContracts(contracts)
+	qb = qb.WithContracts(contracts).WithMinimumFreshness(minimumFreshness)
 	collections, err := m.NFTCollectionQuery.ExecuteQuery(qb)
 	if err != nil {
 		return []database.NFTCollection{}, err

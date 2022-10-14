@@ -10,7 +10,8 @@ database:
   verbose: false
 server:
   listen_addr: 0.0.0.0:8080
-  cache_ttl: 300
+  ownership_cache_ttl: 300
+  collection_cache_ttl: 3600
   max_nft_pages: 5
 alchemy:
   - blockchain: ethereum

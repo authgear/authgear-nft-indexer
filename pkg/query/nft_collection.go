@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"time"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
@@ -35,6 +36,12 @@ func (b NFTCollectionQueryBuilder) WithContracts(contracts []authgearweb3.Contra
 		b.Where("blockchain IN (?) AND network IN (?) AND contract_address IN (?)", bun.In(blockchains), bun.In(networks), bun.In(contractAddresses)),
 	}
 
+}
+
+func (b NFTCollectionQueryBuilder) WithMinimumFreshness(t time.Time) NFTCollectionQueryBuilder {
+	return NFTCollectionQueryBuilder{
+		b.Where("updated_at > ?", t),
+	}
 }
 
 func (q *NFTCollectionQuery) NewQueryBuilder() NFTCollectionQueryBuilder {
