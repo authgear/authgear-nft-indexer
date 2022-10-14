@@ -3,7 +3,7 @@ module github.com/authgear/authgear-nft-indexer
 go 1.18
 
 require (
-	github.com/authgear/authgear-server v0.0.0-20221011105753-0a6be8dc8bc0
+	github.com/authgear/authgear-server v0.0.0-20221014041353-a365674b8e7e
 	github.com/google/wire v0.5.0
 	github.com/jrallison/go-workers v0.0.0-20180112190529-dbf81d0b75bb
 	github.com/oklog/ulid/v2 v2.1.0
@@ -69,7 +69,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/iawaknahc/jsonschema v0.0.0-20211026064614-d05c07b7760d // indirect
-	github.com/iawaknahc/originmatcher v0.0.0-20211201081401-fcef394681f5 // indirect
+	github.com/iawaknahc/originmatcher v0.0.0-20221013032908-274b9eda03bc // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jhump/protoreflect v1.8.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
