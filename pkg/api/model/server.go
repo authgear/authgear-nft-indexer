@@ -72,7 +72,6 @@ func NewNFTOwnership(ownerID authgearweb3.ContractID, nfts []NFT) NFTOwnership {
 }
 
 type GetContractMetadataRequestData struct {
-	AppID       string                    `json:"app_id"`
 	ContractIDs []authgearweb3.ContractID `json:"contract_ids"`
 }
 type GetContractMetadataResponse struct {
@@ -80,7 +79,6 @@ type GetContractMetadataResponse struct {
 }
 
 type ProbeCollectionRequestData struct {
-	AppID      string                  `json:"app_id"`
 	ContractID authgearweb3.ContractID `json:"contract_id"`
 }
 

@@ -4,15 +4,15 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/handler"
 	"github.com/authgear/authgear-nft-indexer/pkg/mutator"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
-	"github.com/authgear/authgear-nft-indexer/pkg/ratelimit"
 	"github.com/authgear/authgear-nft-indexer/pkg/service"
 	"github.com/authgear/authgear-nft-indexer/pkg/web3"
-	agratelimit "github.com/authgear/authgear-server/pkg/lib/ratelimit"
+	"github.com/authgear/authgear-server/pkg/util/clock"
 	"github.com/authgear/authgear-server/pkg/util/httputil"
 	"github.com/google/wire"
 )
 
 var DependencySet = wire.NewSet(
+	clock.DependencySet,
 
 	query.DependencySet,
 	wire.Bind(new(service.ProbeServiceNFTCollectionProbeQuery), new(*query.NFTCollectionProbeQuery)),
@@ -26,10 +26,6 @@ var DependencySet = wire.NewSet(
 	wire.Bind(new(service.MetadataServiceAlchemyAPI), new(*web3.AlchemyAPI)),
 	wire.Bind(new(service.ProbeServiceAlchemyAPI), new(*web3.AlchemyAPI)),
 	wire.Bind(new(service.OwnershipServiceAlchemyAPI), new(*web3.AlchemyAPI)),
-
-	ratelimit.DependencySet,
-	wire.Bind(new(handler.GetCollectionMetadataHandlerRateLimiter), new(*agratelimit.Limiter)),
-	wire.Bind(new(handler.ProbeCollectionHandlerRateLimiter), new(*agratelimit.Limiter)),
 
 	service.DependencySet,
 	wire.Bind(new(handler.GetCollectionMetadataHandlerMetadataService), new(*service.MetadataService)),

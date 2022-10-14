@@ -130,12 +130,10 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 		NFTCollectionQuery:   nftCollectionQuery,
 		NFTCollectionMutator: nftCollectionMutator,
 	}
-	limiter := p.RateLimiter
 	getCollectionMetadataAPIHandler := &handler.GetCollectionMetadataAPIHandler{
 		JSON:            jsonResponseWriter,
 		Logger:          getCollectionMetadataHandlerLogger,
 		MetadataService: metadataService,
-		RateLimiter:     limiter,
 	}
 	return getCollectionMetadataAPIHandler
 }
@@ -167,12 +165,10 @@ func NewProbeCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 		NFTCollectionProbeQuery:   nftCollectionProbeQuery,
 		NFTCollectionProbeMutator: nftCollectionProbeMutator,
 	}
-	limiter := p.RateLimiter
 	probeCollectionAPIHandler := &handler.ProbeCollectionAPIHandler{
 		JSON:         jsonResponseWriter,
 		Logger:       probeCollectionHandlerLogger,
 		ProbeService: probeService,
-		RateLimiter:  limiter,
 	}
 	return probeCollectionAPIHandler
 }

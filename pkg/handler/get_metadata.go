@@ -8,7 +8,6 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
-	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
@@ -26,10 +25,6 @@ func NewGetCollectionMetadataHandlerLogger(lf *log.Factory) GetCollectionMetadat
 	return GetCollectionMetadataHandlerLogger{lf.New("api-get-collection-metadata")}
 }
 
-type GetCollectionMetadataHandlerRateLimiter interface {
-	TakeToken(bucket ratelimit.Bucket) error
-}
-
 type GetCollectionMetadataHandlerMetadataService interface {
 	GetContractMetadata(contracts []authgearweb3.ContractID) ([]database.NFTCollection, error)
 }
@@ -38,7 +33,6 @@ type GetCollectionMetadataAPIHandler struct {
 	JSON            JSONResponseWriter
 	Logger          GetCollectionMetadataHandlerLogger
 	MetadataService GetCollectionMetadataHandlerMetadataService
-	RateLimiter     GetCollectionMetadataHandlerRateLimiter
 }
 
 func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
@@ -49,21 +43,6 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to decode request body")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to decode request body")})
-		return
-	}
-
-	if body.AppID == "" {
-		h.Logger.Error("missing app id")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing app id")})
-		return
-	}
-
-	err = h.RateLimiter.TakeToken(AntiSpamContractMetadataRequestBucket(body.AppID))
-	if err != nil {
-		h.Logger.WithError(err).Error("unable to take token from rate limiter")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{
-			Error: apierrors.TooManyRequest.WithReason(string(apierrors.TooManyRequest)).New("rate limited"),
-		})
 		return
 	}
 
