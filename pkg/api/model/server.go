@@ -17,15 +17,6 @@ type NFTCollection struct {
 	Type            string             `json:"type"`
 }
 
-type WatchCollectionRequestData struct {
-	ContractID string `json:"contract_id"`
-	Name       string `json:"name,omitempty"`
-}
-
-type CollectionListResponse struct {
-	Items []NFTCollection `json:"items"`
-}
-
 type AccountIdentifier struct {
 	Address authgearweb3.EIP55 `json:"address"`
 }
