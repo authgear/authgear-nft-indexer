@@ -8,6 +8,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
+	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
@@ -25,14 +26,19 @@ func NewGetCollectionMetadataHandlerLogger(lf *log.Factory) GetCollectionMetadat
 	return GetCollectionMetadataHandlerLogger{lf.New("api-get-collection-metadata")}
 }
 
+type GetCollectionMetadataHandlerRateLimiter interface {
+	TakeToken(bucket ratelimit.Bucket) error
+}
+
 type GetCollectionMetadataHandlerMetadataService interface {
-	GetContractMetadata(appID string, contracts []authgearweb3.ContractID) ([]database.NFTCollection, error)
+	GetContractMetadata(contracts []authgearweb3.ContractID) ([]database.NFTCollection, error)
 }
 
 type GetCollectionMetadataAPIHandler struct {
 	JSON            JSONResponseWriter
 	Logger          GetCollectionMetadataHandlerLogger
 	MetadataService GetCollectionMetadataHandlerMetadataService
+	RateLimiter     GetCollectionMetadataHandlerRateLimiter
 }
 
 func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
@@ -49,6 +55,15 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 	if body.AppID == "" {
 		h.Logger.Error("missing app id")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing app id")})
+		return
+	}
+
+	err = h.RateLimiter.TakeToken(AntiSpamContractMetadataRequestBucket(body.AppID))
+	if err != nil {
+		h.Logger.WithError(err).Error("unable to take token from rate limiter")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{
+			Error: apierrors.TooManyRequest.WithReason(string(apierrors.TooManyRequest)).New("rate limited"),
+		})
 		return
 	}
 
@@ -76,7 +91,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 		return
 	}
 
-	metadatas, err := h.MetadataService.GetContractMetadata(body.AppID, contracts)
+	metadatas, err := h.MetadataService.GetContractMetadata(contracts)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get contract metadata")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get contract metadata")})

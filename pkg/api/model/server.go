@@ -98,7 +98,6 @@ type ProbeCollectionResponse struct {
 }
 
 type ListOwnerNFTRequestData struct {
-	AppID        string   `json:"app_id"`
 	OwnerAddress string   `json:"owner_address"`
 	ContractIDs  []string `json:"contract_ids"`
 }

@@ -76,12 +76,10 @@ func NewListOwnerNFTAPIHandler(p *handler.RequestProvider) http.Handler {
 		Ctx:     context,
 		Session: db,
 	}
-	limiter := p.RateLimiter
 	metadataService := &service.MetadataService{
 		AlchemyAPI:           alchemyAPI,
 		NFTCollectionQuery:   nftCollectionQuery,
 		NFTCollectionMutator: nftCollectionMutator,
-		RateLimiter:          limiter,
 	}
 	listOwnerNFTAPIHandler := &handler.ListOwnerNFTAPIHandler{
 		JSON:             jsonResponseWriter,
@@ -115,17 +113,17 @@ func NewGetCollectionMetadataAPIHandler(p *handler.RequestProvider) http.Handler
 		Ctx:     context,
 		Session: db,
 	}
-	limiter := p.RateLimiter
 	metadataService := &service.MetadataService{
 		AlchemyAPI:           alchemyAPI,
 		NFTCollectionQuery:   nftCollectionQuery,
 		NFTCollectionMutator: nftCollectionMutator,
-		RateLimiter:          limiter,
 	}
+	limiter := p.RateLimiter
 	getCollectionMetadataAPIHandler := &handler.GetCollectionMetadataAPIHandler{
 		JSON:            jsonResponseWriter,
 		Logger:          getCollectionMetadataHandlerLogger,
 		MetadataService: metadataService,
+		RateLimiter:     limiter,
 	}
 	return getCollectionMetadataAPIHandler
 }
@@ -141,7 +139,6 @@ func NewProbeCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 	alchemyAPI := &web3.AlchemyAPI{
 		Config: config,
 	}
-	limiter := p.RateLimiter
 	request := p.Request
 	context := handler.ProvideRequestContext(request)
 	db := p.Database
@@ -155,14 +152,15 @@ func NewProbeCollectionAPIHandler(p *handler.RequestProvider) http.Handler {
 	}
 	probeService := &service.ProbeService{
 		AlchemyAPI:                alchemyAPI,
-		RateLimiter:               limiter,
 		NFTCollectionProbeQuery:   nftCollectionProbeQuery,
 		NFTCollectionProbeMutator: nftCollectionProbeMutator,
 	}
+	limiter := p.RateLimiter
 	probeCollectionAPIHandler := &handler.ProbeCollectionAPIHandler{
 		JSON:         jsonResponseWriter,
 		Logger:       probeCollectionHandlerLogger,
 		ProbeService: probeService,
+		RateLimiter:  limiter,
 	}
 	return probeCollectionAPIHandler
 }

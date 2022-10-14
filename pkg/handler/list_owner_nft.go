@@ -32,7 +32,7 @@ type ListOwnerNFTHandlerOwnershipService interface {
 }
 
 type ListOwnerNFTHandlerMetadataService interface {
-	GetContractMetadata(appID string, contracts []authgearweb3.ContractID) ([]database.NFTCollection, error)
+	GetContractMetadata(contracts []authgearweb3.ContractID) ([]database.NFTCollection, error)
 }
 
 type ListOwnerNFTAPIHandler struct {
@@ -50,12 +50,6 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to decode request body")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to decode request body")})
-		return
-	}
-
-	if body.AppID == "" {
-		h.Logger.Error("missing app id")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing app id")})
 		return
 	}
 
@@ -103,7 +97,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		return
 	}
 
-	collections, err := h.MetadataService.GetContractMetadata(body.AppID, contracts)
+	collections, err := h.MetadataService.GetContractMetadata(contracts)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get nft collections")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get nft collections")})

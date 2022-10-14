@@ -28,8 +28,8 @@ var DependencySet = wire.NewSet(
 	wire.Bind(new(service.OwnershipServiceAlchemyAPI), new(*web3.AlchemyAPI)),
 
 	ratelimit.DependencySet,
-	wire.Bind(new(service.MetadataServiceRateLimiter), new(*agratelimit.Limiter)),
-	wire.Bind(new(service.ProbeServiceRateLimiter), new(*agratelimit.Limiter)),
+	wire.Bind(new(handler.GetCollectionMetadataHandlerRateLimiter), new(*agratelimit.Limiter)),
+	wire.Bind(new(handler.ProbeCollectionHandlerRateLimiter), new(*agratelimit.Limiter)),
 
 	service.DependencySet,
 	wire.Bind(new(handler.GetCollectionMetadataHandlerMetadataService), new(*service.MetadataService)),

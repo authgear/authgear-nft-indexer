@@ -7,6 +7,7 @@ import (
 	apimodel "github.com/authgear/authgear-nft-indexer/pkg/api/model"
 	authgearapi "github.com/authgear/authgear-server/pkg/api"
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
+	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
@@ -25,13 +26,18 @@ func NewProbeCollectionHandlerLogger(lf *log.Factory) ProbeCollectionHandlerLogg
 }
 
 type ProbeCollectionHandlerProbeService interface {
-	ProbeCollection(appID string, contractID authgearweb3.ContractID) (bool, error)
+	ProbeCollection(contractID authgearweb3.ContractID) (bool, error)
+}
+
+type ProbeCollectionHandlerRateLimiter interface {
+	TakeToken(bucket ratelimit.Bucket) error
 }
 
 type ProbeCollectionAPIHandler struct {
 	JSON         JSONResponseWriter
 	Logger       ProbeCollectionHandlerLogger
 	ProbeService ProbeCollectionHandlerProbeService
+	RateLimiter  ProbeCollectionHandlerRateLimiter
 }
 
 func (h *ProbeCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
@@ -51,6 +57,15 @@ func (h *ProbeCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		return
 	}
 
+	err = h.RateLimiter.TakeToken(AntiSpamProbeCollectionRequestBucket(body.AppID))
+	if err != nil {
+		h.Logger.WithError(err).Error("unable to take token from rate limiter")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{
+			Error: apierrors.TooManyRequest.WithReason(string(apierrors.TooManyRequest)).New("rate limited"),
+		})
+		return
+	}
+
 	if body.ContractID == "" {
 		h.Logger.Error("missing contract_id")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract_id")})
@@ -64,7 +79,7 @@ func (h *ProbeCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 		return
 	}
 
-	probe, err := h.ProbeService.ProbeCollection(body.AppID, *contractID)
+	probe, err := h.ProbeService.ProbeCollection(*contractID)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to probe service")
 		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to probe service")})

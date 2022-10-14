@@ -8,7 +8,6 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
-	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
@@ -20,18 +19,13 @@ type MetadataServiceNFTCollectionMutator interface {
 	InsertNFTCollection(contractID authgearweb3.ContractID, contractName string, tokenType database.NFTCollectionType, totalSupply *big.Int) (*database.NFTCollection, error)
 }
 
-type MetadataServiceRateLimiter interface {
-	TakeToken(bucket ratelimit.Bucket) error
-}
-
 type MetadataService struct {
 	AlchemyAPI           MetadataServiceAlchemyAPI
 	NFTCollectionQuery   query.NFTCollectionQuery
 	NFTCollectionMutator MetadataServiceNFTCollectionMutator
-	RateLimiter          MetadataServiceRateLimiter
 }
 
-func (m *MetadataService) GetContractMetadata(appID string, contracts []authgearweb3.ContractID) ([]database.NFTCollection, error) {
+func (m *MetadataService) GetContractMetadata(contracts []authgearweb3.ContractID) ([]database.NFTCollection, error) {
 	qb := m.NFTCollectionQuery.NewQueryBuilder()
 	qb = qb.WithContracts(contracts)
 	collections, err := m.NFTCollectionQuery.ExecuteQuery(qb)
@@ -61,11 +55,6 @@ func (m *MetadataService) GetContractMetadata(appID string, contracts []authgear
 			return []database.NFTCollection{}, err
 		}
 		contractURL, err := contractID.URL()
-		if err != nil {
-			return []database.NFTCollection{}, err
-		}
-
-		err = m.RateLimiter.TakeToken(AntiSpamContractMetadataRequestBucket(appID))
 		if err != nil {
 			return []database.NFTCollection{}, err
 		}

@@ -3,16 +3,11 @@ package service
 import (
 	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
-	"github.com/authgear/authgear-server/pkg/lib/ratelimit"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
 
 type ProbeServiceAlchemyAPI interface {
 	GetOwnersForCollection(contractID authgearweb3.ContractID) (*alchemy.GetOwnersForCollectionResponse, error)
-}
-
-type ProbeServiceRateLimiter interface {
-	TakeToken(bucket ratelimit.Bucket) error
 }
 
 type ProbeServiceNFTCollectionProbeQuery interface {
@@ -25,21 +20,15 @@ type ProbeServiceNFTCollectionProbeMutator interface {
 
 type ProbeService struct {
 	AlchemyAPI                ProbeServiceAlchemyAPI
-	RateLimiter               ProbeServiceRateLimiter
 	NFTCollectionProbeQuery   ProbeServiceNFTCollectionProbeQuery
 	NFTCollectionProbeMutator ProbeServiceNFTCollectionProbeMutator
 }
 
-func (m *ProbeService) ProbeCollection(appID string, contractID authgearweb3.ContractID) (bool, error) {
+func (m *ProbeService) ProbeCollection(contractID authgearweb3.ContractID) (bool, error) {
 
 	collectionProbe, err := m.NFTCollectionProbeQuery.QueryCollectionProbeByContractID(contractID)
 	if err == nil && collectionProbe != nil {
 		return collectionProbe.IsLargeCollection, nil
-	}
-
-	err = m.RateLimiter.TakeToken(AntiSpamProbeCollectionRequestBucket(appID))
-	if err != nil {
-		return false, err
 	}
 
 	res, err := m.AlchemyAPI.GetOwnersForCollection(contractID)
