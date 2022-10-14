@@ -52,12 +52,6 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 		return
 	}
 
-	if len(body.ContractIDs) == 0 {
-		h.Logger.Error("missing contract id")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("missing contract_id")})
-		return
-	}
-
 	ownerID := body.OwnerAddress
 	contracts := make([]authgearweb3.ContractID, 0)
 	for _, e := range body.ContractIDs {
