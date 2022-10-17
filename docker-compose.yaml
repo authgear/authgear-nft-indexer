@@ -7,15 +7,7 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
     ports:
-      - "5432:5432"
-  redis:
-    image: redis:6.0
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
+      - "6432:5432"
 volumes:
-  redis_data:
-    driver: local
   db_data:
     driver: local
