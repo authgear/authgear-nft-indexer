@@ -59,7 +59,7 @@ func (m *MetadataService) GetContractMetadata(contracts []authgearweb3.ContractI
 
 		contractMetadata, err := m.AlchemyAPI.GetContractMetadata(contract)
 		if err != nil {
-			return []database.NFTCollection{}, ErrAlchemyError.New(err.Error())
+			return []database.NFTCollection{}, ErrAlchemyError.Wrap(err, "unexpected error returned from alchemy")
 		}
 
 		tokenType, err := database.ParseNFTCollectionType(contractMetadata.ContractMetadata.TokenType)
