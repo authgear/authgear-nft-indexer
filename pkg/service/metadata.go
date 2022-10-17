@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/database"
 	"github.com/authgear/authgear-nft-indexer/pkg/query"
+	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/util/clock"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
@@ -59,22 +59,22 @@ func (m *MetadataService) GetContractMetadata(contracts []authgearweb3.ContractI
 
 		contractMetadata, err := m.AlchemyAPI.GetContractMetadata(contract)
 		if err != nil {
-			return []database.NFTCollection{}, err
+			return []database.NFTCollection{}, ErrAlchemyError.New(err.Error())
 		}
 
 		tokenType, err := database.ParseNFTCollectionType(contractMetadata.ContractMetadata.TokenType)
 		if err != nil {
-			return []database.NFTCollection{}, err
+			return []database.NFTCollection{}, ErrBadNFTCollection.NewWithDetails("unable to parse token type", apierrors.Details{"tokenType": contractMetadata.ContractMetadata.TokenType})
 		}
 
 		if contractMetadata.ContractMetadata.Name == "" {
-			return []database.NFTCollection{}, fmt.Errorf("missing contract metadata")
+			return []database.NFTCollection{}, ErrBadNFTCollection.New("missing contract metadata")
 		}
 
 		totalSupply := new(big.Int)
 		if contractMetadata.ContractMetadata.TotalSupply != "" {
 			if _, ok := totalSupply.SetString(contractMetadata.ContractMetadata.TotalSupply, 10); !ok {
-				return []database.NFTCollection{}, fmt.Errorf("failed to parse totalSupply")
+				return []database.NFTCollection{}, ErrBadNFTCollection.NewWithDetails("failed to parse total supply", apierrors.Details{"totalSupply": contractMetadata.ContractMetadata.TotalSupply})
 			}
 		}
 

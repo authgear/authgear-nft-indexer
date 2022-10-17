@@ -41,7 +41,7 @@ func (h *OwnershipService) FetchAndInsertNFTOwnerships(ownerID authgearweb3.Cont
 	for ok := true; ok; ok = pageKey != "" && nftFetchCount <= h.Config.Server.MaxNFTPages {
 		nfts, err := h.AlchemyAPI.GetOwnerNFTs(ownerID.Address.String(), contracts, pageKey)
 		if err != nil {
-			return []database.NFTOwnership{}, err
+			return []database.NFTOwnership{}, ErrAlchemyError.New(err.Error())
 		}
 
 		for _, ownedNFT := range nfts.OwnedNFTs {
@@ -77,7 +77,7 @@ func (h *OwnershipService) FetchAndInsertNFTOwnerships(ownerID authgearweb3.Cont
 				Order:       "desc",
 			})
 			if err != nil {
-				return []database.NFTOwnership{}, err
+				return []database.NFTOwnership{}, ErrAlchemyError.New(err.Error())
 			}
 			nftTransfers = append(nftTransfers, transfers.Transfers...)
 			transferFetchCount++

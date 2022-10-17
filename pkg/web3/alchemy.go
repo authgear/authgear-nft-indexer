@@ -91,14 +91,14 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 
 	res, err := http.Get(requestURL.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var response alchemy.GetNFTsResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, err
 	}
 
 	return &response, nil
@@ -141,14 +141,14 @@ func (a *AlchemyAPI) GetAssetTransfers(params GetAssetTransferParams) (*alchemy.
 
 	res, err := http.Post(requestURL.String(), "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var response alchemy.AssetTransferResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, err
 	}
 
 	if response.Error != nil {
@@ -179,14 +179,14 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 
 	res, err := http.Get(requestURL.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var response alchemy.ContractMetadataResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, err
 	}
 
 	return &response, nil
@@ -212,14 +212,14 @@ func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) 
 
 	res, err := http.Get(requestURL.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	var response alchemy.GetOwnersForCollectionResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, err
 	}
 
 	return &response, nil

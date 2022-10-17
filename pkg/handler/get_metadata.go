@@ -56,7 +56,7 @@ func (h *GetCollectionMetadataAPIHandler) ServeHTTP(resp http.ResponseWriter, re
 	metadatas, err := h.MetadataService.GetContractMetadata(contracts)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get contract metadata")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get contract metadata")})
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 
