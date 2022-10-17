@@ -1,5 +1,5 @@
 database:
-  url: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+  url: postgres://postgres:postgres@localhost:6432/postgres?sslmode=disable
   pool_size: 10
   verbose: false
 server:
