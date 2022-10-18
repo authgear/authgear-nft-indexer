@@ -25,7 +25,6 @@ type ProbeService struct {
 }
 
 func (m *ProbeService) ProbeCollection(contractID authgearweb3.ContractID) (bool, error) {
-
 	collectionProbe, err := m.NFTCollectionProbeQuery.QueryCollectionProbeByContractID(contractID)
 	if err == nil && collectionProbe != nil {
 		return collectionProbe.IsLargeCollection, nil
@@ -33,7 +32,7 @@ func (m *ProbeService) ProbeCollection(contractID authgearweb3.ContractID) (bool
 
 	res, err := m.AlchemyAPI.GetOwnersForCollection(contractID)
 	if err != nil {
-		return false, err
+		return false, ErrAlchemyError.Wrap(err, "unexpected error returned from alchemy")
 	}
 
 	dbProbe, err := m.NFTCollectionProbeMutator.InsertNFTCollectionProbe(contractID, res.PageKey != nil)

@@ -47,8 +47,8 @@ func (h *ProbeCollectionAPIHandler) ServeHTTP(resp http.ResponseWriter, req *htt
 	contractID := body.ContractID
 	probe, err := h.ProbeService.ProbeCollection(contractID)
 	if err != nil {
-		h.Logger.WithError(err).Error("failed to probe service")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewBadRequest("failed to probe service")})
+		h.Logger.WithError(err).Error("failed to probe nft collection")
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 

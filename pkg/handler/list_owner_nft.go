@@ -73,7 +73,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	collections, err := h.MetadataService.GetContractMetadata(contracts)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get nft collections")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get nft collections")})
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 
@@ -100,7 +100,7 @@ func (h *ListOwnerNFTAPIHandler) ServeHTTP(resp http.ResponseWriter, req *http.R
 	ownerships, err := h.OwnershipService.GetOwnerships(ownerID, contracts)
 	if err != nil {
 		h.Logger.WithError(err).Error("failed to get nft ownerships")
-		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: apierrors.NewInternalError("failed to get nft ownerships")})
+		h.JSON.WriteResponse(resp, &authgearapi.Response{Error: err})
 		return
 	}
 
