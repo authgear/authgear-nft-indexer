@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"path"
 
@@ -12,6 +13,18 @@ import (
 	"github.com/authgear/authgear-server/pkg/util/hexstring"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
+
+func decodeAlchemyJSON[T any](res *http.Response, tag string, t *T) error {
+	var buf bytes.Buffer
+	reader := io.TeeReader(res.Body, &buf)
+
+	err := json.NewDecoder(reader).Decode(t)
+	if err != nil {
+		return ErrAlchemyProtocol.Wrap(err, fmt.Sprintf("%v: %v", tag, buf.String()))
+	}
+
+	return nil
+}
 
 type AlchemyAPI struct {
 	Config config.Config
@@ -96,7 +109,7 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 	defer res.Body.Close()
 
 	var response alchemy.GetNFTsResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
+	err = decodeAlchemyJSON(res, "getNFTs", &response)
 	if err != nil {
 		return nil, err
 	}
@@ -146,13 +159,17 @@ func (a *AlchemyAPI) GetAssetTransfers(params GetAssetTransferParams) (*alchemy.
 	defer res.Body.Close()
 
 	var response alchemy.AssetTransferResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
+	err = decodeAlchemyJSON(res, "alchemy_getAssetTransfers", &response)
 	if err != nil {
 		return nil, err
 	}
 
 	if response.Error != nil {
-		return nil, fmt.Errorf("failed to get NFT transfers: %s", response.Error.Message)
+		return nil, ErrAlchemyProtocol.New(fmt.Sprintf(
+			"alchemy_getAssetTransfers: %v %v",
+			response.Error.Code,
+			response.Error.Message,
+		))
 	}
 
 	return &response.Result, nil
@@ -184,7 +201,7 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 	defer res.Body.Close()
 
 	var response alchemy.ContractMetadataResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
+	err = decodeAlchemyJSON(res, "GetContractMetadata", &response)
 	if err != nil {
 		return nil, err
 	}
@@ -217,11 +234,10 @@ func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) 
 	defer res.Body.Close()
 
 	var response alchemy.GetOwnersForCollectionResponse
-	err = json.NewDecoder(res.Body).Decode(&response)
+	err = decodeAlchemyJSON(res, "getOwnersForCollection", &response)
 	if err != nil {
 		return nil, err
 	}
 
 	return &response, nil
-
 }

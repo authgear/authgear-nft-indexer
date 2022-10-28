@@ -41,13 +41,13 @@ func (h *OwnershipService) FetchAndInsertNFTOwnerships(ownerID authgearweb3.Cont
 	for ok := true; ok; ok = pageKey != "" && nftFetchCount <= h.Config.Server.MaxNFTPages {
 		nfts, err := h.AlchemyAPI.GetOwnerNFTs(ownerID.Address.String(), contracts, pageKey)
 		if err != nil {
-			return []database.NFTOwnership{}, ErrAlchemyError.Wrap(err, "unexpected error returned from alchemy")
+			return nil, err
 		}
 
 		for _, ownedNFT := range nfts.OwnedNFTs {
 			contractID, err := authgearweb3.NewContractID(ownerID.Blockchain, ownerID.Network, ownedNFT.Contract.Address, url.Values{})
 			if err != nil {
-				return []database.NFTOwnership{}, err
+				return nil, err
 			}
 
 			contractIDsToEnquire = append(contractIDsToEnquire, *contractID)
@@ -77,7 +77,7 @@ func (h *OwnershipService) FetchAndInsertNFTOwnerships(ownerID authgearweb3.Cont
 				Order:       "desc",
 			})
 			if err != nil {
-				return []database.NFTOwnership{}, ErrAlchemyError.Wrap(err, "unexpected error returned from alchemy")
+				return nil, err
 			}
 			nftTransfers = append(nftTransfers, transfers.Transfers...)
 			transferFetchCount++
@@ -87,13 +87,13 @@ func (h *OwnershipService) FetchAndInsertNFTOwnerships(ownerID authgearweb3.Cont
 
 	ownerships, err := alchemy.MakeNFTOwnerships(ownerID, contracts, nftTransfers, ownedNFTs)
 	if err != nil {
-		return []database.NFTOwnership{}, err
+		return nil, err
 	}
 
 	// Insert ownerships
 	err = h.NFTOwnershipMutator.InsertNFTOwnerships(ownerships)
 	if err != nil {
-		return []database.NFTOwnership{}, err
+		return nil, err
 	}
 	return ownerships, nil
 }
@@ -107,7 +107,7 @@ func (h *OwnershipService) GetOwnerships(ownerID authgearweb3.ContractID, contra
 	ownershipQb = ownershipQb.WithContracts(contracts).WithOwner(&ownerID).WithMinimumFreshness(minimumFreshness)
 	ownerships, err := h.NFTOwnershipQuery.ExecuteQuery(ownershipQb)
 	if err != nil {
-		return []database.NFTOwnership{}, err
+		return nil, err
 	}
 
 	// Find out which contract to fetch
@@ -138,7 +138,7 @@ func (h *OwnershipService) GetOwnerships(ownerID authgearweb3.ContractID, contra
 	if len(contractsToFetch) != 0 {
 		updatedOwnerships, err := h.FetchAndInsertNFTOwnerships(ownerID, contractsToFetch)
 		if err != nil {
-			return []database.NFTOwnership{}, err
+			return nil, err
 		}
 
 		for _, ownership := range updatedOwnerships {

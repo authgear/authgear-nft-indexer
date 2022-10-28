@@ -32,7 +32,7 @@ func (m *ProbeService) ProbeCollection(contractID authgearweb3.ContractID) (bool
 
 	res, err := m.AlchemyAPI.GetOwnersForCollection(contractID)
 	if err != nil {
-		return false, ErrAlchemyError.Wrap(err, "unexpected error returned from alchemy")
+		return false, err
 	}
 
 	dbProbe, err := m.NFTCollectionProbeMutator.InsertNFTCollectionProbe(contractID, res.PageKey != nil)

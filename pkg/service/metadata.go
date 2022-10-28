@@ -37,7 +37,7 @@ func (m *MetadataService) GetContractMetadata(contracts []authgearweb3.ContractI
 	qb = qb.WithContracts(contracts).WithMinimumFreshness(minimumFreshness)
 	collections, err := m.NFTCollectionQuery.ExecuteQuery(qb)
 	if err != nil {
-		return []database.NFTCollection{}, err
+		return nil, err
 	}
 
 	contractIDToCollectionMap := make(map[string]*database.NFTCollection)
@@ -59,22 +59,22 @@ func (m *MetadataService) GetContractMetadata(contracts []authgearweb3.ContractI
 
 		contractMetadata, err := m.AlchemyAPI.GetContractMetadata(contract)
 		if err != nil {
-			return []database.NFTCollection{}, ErrAlchemyError.Wrap(err, "unexpected error returned from alchemy")
+			return nil, err
 		}
 
 		tokenType, err := database.ParseNFTCollectionType(contractMetadata.ContractMetadata.TokenType)
 		if err != nil {
-			return []database.NFTCollection{}, ErrBadNFTCollection.NewWithDetails("unable to parse token type", apierrors.Details{"tokenType": contractMetadata.ContractMetadata.TokenType})
+			return nil, ErrBadNFTCollection.NewWithDetails("unable to parse token type", apierrors.Details{"tokenType": contractMetadata.ContractMetadata.TokenType})
 		}
 
 		if contractMetadata.ContractMetadata.Name == "" {
-			return []database.NFTCollection{}, ErrBadNFTCollection.New("missing contract metadata")
+			return nil, ErrBadNFTCollection.New("missing contract metadata")
 		}
 
 		totalSupply := new(big.Int)
 		if contractMetadata.ContractMetadata.TotalSupply != "" {
 			if _, ok := totalSupply.SetString(contractMetadata.ContractMetadata.TotalSupply, 10); !ok {
-				return []database.NFTCollection{}, ErrBadNFTCollection.NewWithDetails("failed to parse total supply", apierrors.Details{"totalSupply": contractMetadata.ContractMetadata.TotalSupply})
+				return nil, ErrBadNFTCollection.NewWithDetails("failed to parse total supply", apierrors.Details{"totalSupply": contractMetadata.ContractMetadata.TotalSupply})
 			}
 		}
 
@@ -86,7 +86,7 @@ func (m *MetadataService) GetContractMetadata(contracts []authgearweb3.ContractI
 		)
 
 		if err != nil {
-			return []database.NFTCollection{}, err
+			return nil, err
 		}
 
 		res = append(res, *newCollection)
