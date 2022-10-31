@@ -6,13 +6,27 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path"
+	"time"
 
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/model/alchemy"
 	"github.com/authgear/authgear-server/pkg/util/hexstring"
 	authgearweb3 "github.com/authgear/authgear-server/pkg/util/web3"
 )
+
+var alchemyClient = &http.Client{
+	Timeout: 5 * time.Second,
+}
+
+func wrapAlchemyTimeout(err error) error {
+	if os.IsTimeout(err) {
+		return ErrAlchemyProtocol.Wrap(err, "timeout")
+	}
+
+	return err
+}
 
 func decodeAlchemyJSON[T any](res *http.Response, tag string, t *T) error {
 	var buf bytes.Buffer
@@ -102,9 +116,9 @@ func (a *AlchemyAPI) GetOwnerNFTs(ownerAddress string, contractIDs []authgearweb
 
 	requestURL.RawQuery = requestQuery.Encode()
 
-	res, err := http.Get(requestURL.String())
+	res, err := alchemyClient.Get(requestURL.String())
 	if err != nil {
-		return nil, err
+		return nil, wrapAlchemyTimeout(err)
 	}
 	defer res.Body.Close()
 
@@ -152,9 +166,9 @@ func (a *AlchemyAPI) GetAssetTransfers(params GetAssetTransferParams) (*alchemy.
 
 	requestURL := alchemyEndpoints.TransferEndpoint
 
-	res, err := http.Post(requestURL.String(), "application/json", bytes.NewBuffer(jsonBody))
+	res, err := alchemyClient.Post(requestURL.String(), "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return nil, err
+		return nil, wrapAlchemyTimeout(err)
 	}
 	defer res.Body.Close()
 
@@ -194,9 +208,9 @@ func (a *AlchemyAPI) GetContractMetadata(contractID authgearweb3.ContractID) (*a
 
 	requestURL.RawQuery = requestQuery.Encode()
 
-	res, err := http.Get(requestURL.String())
+	res, err := alchemyClient.Get(requestURL.String())
 	if err != nil {
-		return nil, err
+		return nil, wrapAlchemyTimeout(err)
 	}
 	defer res.Body.Close()
 
@@ -227,9 +241,9 @@ func (a *AlchemyAPI) GetOwnersForCollection(contractID authgearweb3.ContractID) 
 
 	requestURL.RawQuery = requestQuery.Encode()
 
-	res, err := http.Get(requestURL.String())
+	res, err := alchemyClient.Get(requestURL.String())
 	if err != nil {
-		return nil, err
+		return nil, wrapAlchemyTimeout(err)
 	}
 	defer res.Body.Close()
 
