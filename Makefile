@@ -13,9 +13,9 @@ setup: vendor
 
 .PHONY: vendor
 vendor:
-	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.46.2
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.55.2
 	go mod download
-	go install github.com/google/wire/cmd/wire@v0.5.0
+	go install github.com/google/wire/cmd/wire
 
 .PHONY: generate
 generate:

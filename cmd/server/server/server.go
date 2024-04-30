@@ -5,6 +5,7 @@ import (
 	"github.com/authgear/authgear-nft-indexer/pkg/database"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	"github.com/authgear/authgear-server/pkg/util/server"
+	"github.com/authgear/authgear-server/pkg/util/signalutil"
 )
 
 type Controller struct {
@@ -23,8 +24,8 @@ func (c *Controller) Start() {
 	lf := log.NewFactory(log.LevelInfo)
 	c.logger = lf.New("server")
 
-	server.Start(c.logger, []server.Spec{
-		{
+	signalutil.Start(c.logger, []signalutil.Daemon{
+		server.NewSpec(&server.Spec{
 			Name:          "Indexer API Server",
 			ListenAddress: u.Host,
 			Handler: NewRouter(
@@ -32,6 +33,6 @@ func (c *Controller) Start() {
 				database,
 				lf,
 			),
-		},
-	})
+		}),
+	}...)
 }
