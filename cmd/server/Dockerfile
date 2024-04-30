@@ -1,5 +1,5 @@
 # Build Stage
-FROM golang:1.18.2-bullseye as builder
+FROM golang:1.21.9-bullseye as builder
 
 ARG GIT_HASH
 WORKDIR /src

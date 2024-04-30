@@ -6,12 +6,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: "1.18.2"
+          go-version-file: "./go.mod"
       - run: make vendor
       - run: make lint
         if: ${{ !cancelled() }}
@@ -21,18 +21,18 @@ jobs:
         if: ${{ !cancelled() }}
 
   build-image:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: test
     env:
       TARGET: server
       IMAGE_NAME: authgear-nft-server
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: make build-image TARGET=$TARGET IMAGE_NAME=$IMAGE_NAME
       - run: make tag-image IMAGE_NAME=$IMAGE_NAME
       - name: Login to Quay.io
         if: ${{ github.repository == 'authgear/authgear-nft-indexer' && github.event_name == 'push' }}
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
