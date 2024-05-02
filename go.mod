@@ -2,6 +2,12 @@ module github.com/authgear/authgear-nft-indexer
 
 go 1.21.9
 
+// btcd < 0.23.2 is affected by https://nvd.nist.gov/vuln/detail/CVE-2022-44797
+// I discovered Go module supports a exclude directive, so I used it here.
+// This makes me further realized that if a indirect dependency is not actually used,
+// then excluding it will actually remove it from the graph.
+exclude github.com/btcsuite/btcd v0.20.1-beta
+
 require (
 	github.com/authgear/authgear-server v0.0.0-20240430034819-f9cf50c118a5
 	github.com/google/wire v0.5.0
@@ -19,7 +25,6 @@ require (
 require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
-	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
