@@ -1,5 +1,5 @@
 # Build Stage
-FROM golang:1.21.9-bullseye as builder
+FROM golang:1.21.9-bookworm as builder
 
 ARG GIT_HASH
 WORKDIR /src
@@ -9,7 +9,7 @@ COPY . .
 RUN make build BIN_NAME=server TARGET=server GIT_HASH=$GIT_HASH
 
 # Runtime Stage
-FROM debian:bullseye-20220801-slim
+FROM debian:bookworm-slim
 ARG GIT_HASH
 WORKDIR /app
 
