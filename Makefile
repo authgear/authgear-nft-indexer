@@ -16,6 +16,7 @@ vendor:
 	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.55.2
 	go mod download
 	go install github.com/google/wire/cmd/wire
+	go install golang.org/x/vuln/cmd/govulncheck@latest
 
 .PHONY: go-mod-outdated
 go-mod-outdated:
@@ -35,6 +36,10 @@ test:
 .PHONY: lint
 lint:
 	golangci-lint run ./cmd/... ./pkg/...
+
+.PHONY: govulncheck
+govulncheck:
+	govulncheck -show traces,version,verbose ./...
 
 .PHONY: fmt
 fmt:
