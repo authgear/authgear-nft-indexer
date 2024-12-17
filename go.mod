@@ -1,6 +1,6 @@
 module github.com/authgear/authgear-nft-indexer
 
-go 1.21.9
+go 1.22.10
 
 // btcd < 0.23.2 is affected by https://nvd.nist.gov/vuln/detail/CVE-2022-44797
 // I discovered Go module supports a exclude directive, so I used it here.
