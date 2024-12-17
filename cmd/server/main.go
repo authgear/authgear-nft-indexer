@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/authgear/authgear-nft-indexer/cmd/server/cmd"
@@ -9,7 +10,8 @@ import (
 )
 
 func main() {
-	err := cmd.Root.Execute()
+	ctx := context.Background()
+	err := cmd.Root.ExecuteContext(ctx)
 	if err != nil {
 		os.Exit(1)
 	} else {
