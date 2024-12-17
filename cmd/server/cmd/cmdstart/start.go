@@ -23,7 +23,7 @@ var cmdStart = &cobra.Command{
 			Config: config,
 		}
 
-		ctrl.Start()
+		ctrl.Start(cmd.Context())
 		return nil
 	},
 }

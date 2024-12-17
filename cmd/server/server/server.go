@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-nft-indexer/pkg/database"
 	"github.com/authgear/authgear-server/pkg/util/log"
@@ -13,7 +15,7 @@ type Controller struct {
 	logger *log.Logger
 }
 
-func (c *Controller) Start() {
+func (c *Controller) Start(ctx context.Context) {
 	u, err := server.ParseListenAddress(c.Config.Server.ListenAddr)
 	if err != nil {
 		c.logger.WithError(err).Fatal("failed to parse admin API server listen address")
@@ -24,8 +26,8 @@ func (c *Controller) Start() {
 	lf := log.NewFactory(log.LevelInfo)
 	c.logger = lf.New("server")
 
-	signalutil.Start(c.logger, []signalutil.Daemon{
-		server.NewSpec(&server.Spec{
+	signalutil.Start(ctx, c.logger, []signalutil.Daemon{
+		server.NewSpec(ctx, &server.Spec{
 			Name:          "Indexer API Server",
 			ListenAddress: u.Host,
 			Handler: NewRouter(
