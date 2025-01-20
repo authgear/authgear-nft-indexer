@@ -1,6 +1,8 @@
 package migrator
 
 import (
+	"embed"
+
 	"github.com/authgear/authgear-nft-indexer/pkg/config"
 	"github.com/authgear/authgear-server/pkg/util/sqlmigrate"
 	migrate "github.com/rubenv/sql-migrate"
@@ -10,7 +12,15 @@ type Migrator struct {
 	Config config.Config
 }
 
-var MainMigrationSet = sqlmigrate.NewMigrateSet("migration", "migrations")
+//go:embed migrations
+var mainMigrationSetFS embed.FS
+
+var MainMigrationSet = sqlmigrate.NewMigrateSet(sqlmigrate.NewMigrationSetOptions{
+	TableName:                            "migration",
+	EmbedFS:                              mainMigrationSetFS,
+	EmbedFSRoot:                          "migrations",
+	OutputPathRelativeToWorkingDirectory: "./cmd/server/migrator/migrations",
+})
 
 func (m *Migrator) Create(name string) (string, error) {
 	return MainMigrationSet.Create(name)
