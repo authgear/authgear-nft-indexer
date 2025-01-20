@@ -1,5 +1,5 @@
 # Build Stage
-FROM golang:1.22.10-bookworm as builder
+FROM quay.io/theauthgear/golang:1.23.4-noble as builder
 
 ARG GIT_HASH
 WORKDIR /src
@@ -9,20 +9,20 @@ COPY . .
 RUN make build BIN_NAME=server TARGET=server GIT_HASH=$GIT_HASH
 
 # Runtime Stage
-FROM debian:bookworm-slim
+FROM ubuntu:noble
 ARG GIT_HASH
 WORKDIR /app
 
-# /etc/mime.types (mime-support)
+# /etc/mime.types (media-types)
 # /usr/share/ca-certificates/*/* (ca-certificates)
 # /usr/share/zoneinfo/ (tzdata)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic-dev \
     libmagic-mgc \
     ca-certificates \
-    mime-support \
+    media-types \
     tzdata \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 RUN update-ca-certificates
 
 COPY ./migrations ./migrations
