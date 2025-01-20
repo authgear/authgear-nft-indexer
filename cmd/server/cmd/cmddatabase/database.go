@@ -21,7 +21,7 @@ func init() {
 	cmdMigrate.AddCommand(cmdMigrateDown)
 	cmdMigrate.AddCommand(cmdMigrateStatus)
 
-	for _, cmd := range []*cobra.Command{cmdMigrateUp, cmdMigrateDown, cmdMigrateStatus} {
+	for _, cmd := range []*cobra.Command{cmdMigrateNew, cmdMigrateUp, cmdMigrateDown, cmdMigrateStatus} {
 		binder.BindString(cmd.Flags(), servercmd.ArgConfig)
 	}
 
